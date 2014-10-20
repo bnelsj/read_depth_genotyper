@@ -1,0 +1,3 @@
+module load networkx
+module load bx-python/0.7.1
+module load fastahack-python/0.1

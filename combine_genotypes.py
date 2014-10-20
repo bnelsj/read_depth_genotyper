@@ -1,4 +1,5 @@
 from optparse import OptionParser 
+import argparse
 import numpy as np
 import pandas as pd
 import csv
@@ -117,50 +118,76 @@ def genotype(gt, t, keystr, FOUT, FOUT_all, ordered_indivs):
 
 if __name__=="__main__":
 
-    opts = OptionParser()
-    opts.add_option("","--contig", dest="contig", default="chrX")
-    opts.add_option("","--regions", dest="fn_regions", default="/net/eichler/vol2/eee_shared/assemblies/hg19/genes/refGene.bed")
-    opts.add_option("","--X_male_genotypes", dest="X_M_genotypes") 
-    opts.add_option("","--X_female_genotypes", dest="X_F_genotypes") 
-    opts.add_option("","--output", dest="fn_out") 
-    opts.add_option("","--gglob_dir", dest="gglob_dir") 
-    opts.add_option("","--plot_dir", dest="plot_dir", default = "plots") 
-    opts.add_option("","--fn_fa", dest="fn_fa", default="/net/eichler/vol7/home/psudmant/genomes/annotations/hg19/superdups/superdups.merged.bed.gz") 
-    opts.add_option('','--genome_fa',dest='fn_fa', default="/net/eichler/vol7/home/psudmant/genomes/fastas/hg19_1kg_phase2_reference/human_g1k_v37.fasta")
-    opts.add_option('','--GC_DTS',dest='fn_GC_DTS', default="/net/eichler/vol7/home/psudmant/genomes/GC_tracks/windowed_DTS/HG19/500_bp_slide_GC")
-    opts.add_option('','--DTS_contigs',dest='fn_DTS_contigs', default="/net/eichler/vol7/home/psudmant/EEE_Lab/1000G/1000genomesScripts/windowed_analysis/DTS_window_analysis/windows/hg19_slide/500_bp_windows.pkl.contigs")
-    opts.add_option('','--dup_tabix',dest='fn_dup_tabix', default="/net/eichler/vol7/home/psudmant/genomes/annotations/hg19/superdups/superdups.merged.bed.gz")
-    opts.add_option('','--max_cp', dest='max_cp', default=12)
-    opts.add_option('','--header', dest='header', action='store_true', default=False)
+#    opts = OptionParser()
+#    opts.add_option("","--contig", dest="contig", default="chrX")
+#    opts.add_option("","--regions", dest="fn_regions", default="/net/eichler/vol2/eee_shared/assemblies/hg19/genes/refGene.bed")
+#    opts.add_option("","--X_male_genotypes", dest="X_M_genotypes") 
+#    opts.add_option("","--X_female_genotypes", dest="X_F_genotypes") 
+#    opts.add_option("","--output", dest="fn_out") 
+#    opts.add_option("","--gglob_dir", dest="gglob_dir") 
+#    opts.add_option("","--plot_dir", dest="plot_dir", default = "plots") 
+#    opts.add_option("","--fn_fa", dest="fn_fa", default="/net/eichler/vol7/home/psudmant/genomes/annotations/hg19/superdups/superdups.merged.bed.gz") 
+#    opts.add_option('','--genome_fa',dest='fn_fa', default="/net/eichler/vol7/home/psudmant/genomes/fastas/hg19_1kg_phase2_reference/human_g1k_v37.fasta")
+#    opts.add_option('','--GC_DTS',dest='fn_GC_DTS', default="/net/eichler/vol7/home/psudmant/genomes/GC_tracks/windowed_DTS/HG19/500_bp_slide_GC")
+#    opts.add_option('','--DTS_contigs',dest='fn_DTS_contigs', default="/net/eichler/vol7/home/psudmant/EEE_Lab/1000G/1000genomesScripts/windowed_analysis/DTS_window_analysis/windows/hg19_slide/500_bp_windows.pkl.contigs")
+#    opts.add_option('','--dup_tabix',dest='fn_dup_tabix', default="/net/eichler/vol7/home/psudmant/genomes/annotations/hg19/superdups/superdups.merged.bed.gz")
+#    opts.add_option('','--max_cp', dest='max_cp', default=12)
+#    opts.add_option('','--header', dest='header', action='store_true', default=False)
 
-    (o, args) = opts.parse_args()
-    
-    max_cp = int(o.max_cp)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--contig", required=True)
+    parser.add_argument("--output", dest="fn_out", required=True)
+    parser.add_argument("--gglob_dir", required=True)
+    parser.add_argument("--regions", dest="fn_regions", required=True)
+    parser.add_argument("--plot_dir", default="plots")
+    parser.add_argument("--fn_fa", default="/net/eichler/vol7/home/psudmant/genomes/fastas/hg19_1kg_phase2_reference/human_g1k_v37.fasta", help="reference genome fasta file (Default: %(default)s)")
+    parser.add_argument("--GC_DTS", dest="fn_GC_DTS", default="/net/eichler/vol7/home/psudmant/genomes/GC_tracks/windowed_DTS/HG19/500_bp_slide_GC", help="GC tracks DTS file (Default: %(default)s")
+    parser.add_argument("--DTS_contigs", dest='fn_DTS_contigs', default="/net/eichler/vol7/home/psudmant/EEE_Lab/1000G/1000genomesScripts/windowed_analysis/DTS_window_analysis/windows/hg19_slide/500_bp_windows.pkl.contigs", help="Contig sizes file (Default: %(default)s)")
+    parser.add_argument("--dup_tabix", dest="fn_dup_tabix", default="/net/eichler/vol7/home/psudmant/genomes/annotations/hg19/superdups/superdups.merged.bed.gz", help="Superdups tabix file (Default: %(default)s)")
+    parser.add_argument("--max_cp", default="12", help="Maximum cp to consider for GMM. Greater values will be rounded instead of fitted. Default: %(default)s")
+    parser.add_argument("--header", action="store_true")
 
-    tbx_dups = pysam.Tabixfile(o.fn_dup_tabix)
-    GC_inf = GC_data(o.fn_GC_DTS, o.contig, o.fn_DTS_contigs)
-    indivs = list(pd.read_json("%s/gglob.idx" % o.gglob_dir).indivs)
+    parser.add_argument("--data_type", choices=["wssd", "sunk"], help="Type of data to genotype (wssd or sunk)")
+    parser.add_argument("--genotype_method", choices=["raw", "GMM"], help="Output raw (float) or integer (Gaussian Mixture Model) genotypes (choices: raw, GMM)")
+
+    parser.add_argument("--subset")
+    parser.add_argument("--total_subsets")
+
+    args = parser.parse_args()
+
+#    (o, args) = opts.parse_args()
+   
+    max_cp = int(args.max_cp)
+
+    tbx_dups = pysam.Tabixfile(args.fn_dup_tabix)
+    GC_inf = GC_data(args.fn_GC_DTS, args.contig, args.fn_DTS_contigs)
+    indivs = list(pd.read_json("%s/gglob.idx" % args.gglob_dir).indivs)
     #X_loci, indivs = merge_X_tables(o.X_M_genotypes, o.X_F_genotypes)
     # GENOTYPE TIME!
     
-    g = gt.genotyper(o.contig, gglob_dir = o.gglob_dir, plot_dir = o.plot_dir, subset_indivs = indivs, fn_fa=o.fn_fa, dup_tabix = tbx_dups, GC_inf = GC_inf)
+    g = gt.genotyper(args.contig, gglob_dir = args.gglob_dir, plot_dir = args.plot_dir, subset_indivs = indivs, fn_fa=args.fn_fa, dup_tabix = tbx_dups, GC_inf = GC_inf)
     
-    regions = pd.read_csv(o.fn_regions, header=None, delimiter="\t", index_col=None)
+    regions = pd.read_csv(args.fn_regions, header=None, delimiter="\t", index_col=None)
     regions.columns = ["contig", "start", "end", "name"]
-    regions_by_contig = regions[regions['contig'] == o.contig]
+    regions_by_contig = regions[regions['contig'] == args.contig]
     nregions = regions_by_contig.shape[0]
 
-    FOUT = open(o.fn_out, 'w')
-    if o.header:
+    FOUT = open(args.fn_out, 'w')
+    if args.header:
         FOUT.write("contig\tstart\tend\tname\t%s\n"%("\t".join(indivs)))
 
     for i, row in regions_by_contig.iterrows():
-        contig, s, e, name = row['contig'], row['start'], row['end'], row['name']
-        X, idx_s, idx_e = g.get_gt_matrix(contig, s, e)
-            #raw_cps = np.mean(X, 1)
-        gts_by_indiv = g.simple_GMM_genotype(X, max_cp=max_cp)
-            #gts_by_indiv, gts_to_label, labels_to_gt = gX.get_gts_by_indiv(correct_for_odd_major=False)
-            #gX.simple_plot("./plots/%s_%d_%d.pdf"%(contig,s,e))
-        gts = "\t".join(["%d"%(gts_by_indiv[i]) for i in indivs])
+        contig, s, e, name = row['contig'], int(row['start']), int(row['end']), row['name']
+        if args.data_type == "wssd":
+            X, idx_s, idx_e = g.get_gt_matrix(contig, s, e)
+        else:
+            X, idx_s, idx_e = g.get_sunk_gt_matrix(contig, s, e)
+        if args.genotype_method == "raw":
+            gt_list = np.mean(X, 1).tolist()
+            gts = "\t".join(map(str, gt_list))
+        else:
+            gts_by_indiv = g.simple_GMM_genotype(X, max_cp=max_cp)
+            gts = "\t".join(["%d"%(gts_by_indiv[i]) for i in indivs])
+        #gX.simple_plot("%s/%s_%d_%d.pdf"%(args.plot_dir, contig,s,e))
         FOUT.write("%s\t%d\t%d\t%s\t%s\n"%(contig, s, e, name, gts))
         print i, "%s\t%d\t%d\t%s\t%s\n"%(contig, s, e, name, gts)
