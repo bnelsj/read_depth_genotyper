@@ -175,7 +175,6 @@ if __name__=="__main__":
     # GENOTYPE TIME!
     
     g = gt.genotyper(args.contig, gglob_dir = args.gglob_dir, plot_dir = args.plot_dir, subset_indivs = indivs, fn_fa=args.fn_fa, dup_tabix = tbx_dups, GC_inf = GC_inf)
-    gt_order = [g.indivs.index(indiv) for indiv in indivs]
 
     regions = pd.read_csv(args.fn_regions, header=None, delimiter="\t", index_col=None)
     regions.columns = ["contig", "start", "end", "name"]
@@ -195,7 +194,7 @@ if __name__=="__main__":
 
         if args.genotype_method == "raw":
             gt_list = np.mean(X, 1).tolist()
-            gt_ordered = gt_list[gt_order]
+            gt_ordered = [gt_list[g.indivs.index(indiv)] for indiv in indivs]
             gts = "\t".join(map(str, gt_ordered))
         else:
             gts_by_indiv = g.simple_GMM_genotype(X, max_cp=max_cp)
