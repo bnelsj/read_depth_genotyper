@@ -144,7 +144,7 @@ if __name__=="__main__":
     parser.add_argument("--GC_DTS", dest="fn_GC_DTS", default="/net/eichler/vol7/home/psudmant/genomes/GC_tracks/windowed_DTS/HG19/500_bp_slide_GC", help="GC tracks DTS file (Default: %(default)s")
     parser.add_argument("--DTS_contigs", dest='fn_DTS_contigs', default="/net/eichler/vol7/home/psudmant/EEE_Lab/1000G/1000genomesScripts/windowed_analysis/DTS_window_analysis/windows/hg19_slide/500_bp_windows.pkl.contigs", help="Contig sizes file (Default: %(default)s)")
     parser.add_argument("--dup_tabix", dest="fn_dup_tabix", default="/net/eichler/vol7/home/psudmant/genomes/annotations/hg19/superdups/superdups.merged.bed.gz", help="Superdups tabix file (Default: %(default)s)")
-    parser.add_argument("--max_cp", default="12", help="Maximum cp to consider for GMM. Greater values will be rounded instead of fitted. Default: %(default)s")
+    parser.add_argument("--max_cp", default=12, type=int, help="Maximum cp to consider for GMM. Greater values will be rounded instead of fitted. Default: %(default)s")
     parser.add_argument("--header", action="store_true")
 
     parser.add_argument("--data_type", choices=["wssd", "sunk"], help="Type of data to genotype (wssd or sunk)")
@@ -152,6 +152,8 @@ if __name__=="__main__":
 
     parser.add_argument("--subset", default=0)
     parser.add_argument("--total_subsets", default=1)
+
+    parser.add_argument("--subset_indivs", nargs="+", help="Subset of individuals to genotype")
 
     args = parser.parse_args()
 
@@ -163,12 +165,18 @@ if __name__=="__main__":
 
     tbx_dups = pysam.Tabixfile(args.fn_dup_tabix)
     GC_inf = GC_data(args.fn_GC_DTS, args.contig, args.fn_DTS_contigs)
-    indivs = list(pd.read_json("%s/gglob.idx" % args.gglob_dir).indivs)
+
+    if args.subset_indivs is None:
+        indivs = list(pd.read_json("%s/gglob.idx" % args.gglob_dir).indivs)
+    else:
+        indivs = args.subset_indivs
+
     #X_loci, indivs = merge_X_tables(o.X_M_genotypes, o.X_F_genotypes)
     # GENOTYPE TIME!
     
     g = gt.genotyper(args.contig, gglob_dir = args.gglob_dir, plot_dir = args.plot_dir, subset_indivs = indivs, fn_fa=args.fn_fa, dup_tabix = tbx_dups, GC_inf = GC_inf)
-    
+    gt_order = [g.indivs.index(indiv) for indiv in indivs]
+
     regions = pd.read_csv(args.fn_regions, header=None, delimiter="\t", index_col=None)
     regions.columns = ["contig", "start", "end", "name"]
     regions_by_contig = regions[regions['contig'] == args.contig]
@@ -187,7 +195,7 @@ if __name__=="__main__":
 
         if args.genotype_method == "raw":
             gt_list = np.mean(X, 1).tolist()
-            gt_ordered = [gt_list[g.indivs.index(indiv)] for indiv in indivs]
+            gt_ordered = gt_list[gt_order]
             gts = "\t".join(map(str, gt_ordered))
         else:
             gts_by_indiv = g.simple_GMM_genotype(X, max_cp=max_cp)
