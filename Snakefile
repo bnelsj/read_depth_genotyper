@@ -1,4 +1,5 @@
 import os
+import time
 
 TOTAL_SUBSETS = 1
 SCRIPT_DIR = "~bnelsj/genotyper_gaussian"
@@ -7,7 +8,7 @@ CHR_OUTPUT_DIR = "genotypes/chr"
 FINAL_OUTPUT_DIR = "genotypes_all"
 GGLOB_DIR = "/net/eichler/vol22/projects/NCS_autism/nobackups/mduyzend/WGS_16p/gglob"
 #REGIONS_FILE = "~bnelsj/gglob_get_genotypes/refGene.merged.bed"
-REGIONS = "BOLA2_SLX1A_SULT1A3_regions.bed"
+REGIONS = "BOLA2.bed"
 CONTIGS = ['chr%s' % str(chr) for chr in list(range(1,23)) + ['X', 'Y']]
 HEADER_CHR = 'chr1'
 def get_header(chr, HEADER_CHR, k):
@@ -35,6 +36,7 @@ rule combine_by_chr:
                 with open(infile, 'r') as reader:
                     for line in reader:
                         outfile.write(line)
+        time.sleep(10)
 
 rule combine_by_subset:
     input: expand("%s/{{chr}}.{k}.{{method}}.{{type}}" % OUTPUT_DIR, k=list(range(TOTAL_SUBSETS)))
@@ -48,6 +50,7 @@ rule combine_by_subset:
                     with open(infile, 'r') as reader:
                         for line in reader:
                             out_genotype.write(line)
+        time.sleep(10)
 
 rule genotype_by_chr:
     input: "%s/gglob.idx" % GGLOB_DIR

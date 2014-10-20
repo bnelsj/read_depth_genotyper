@@ -150,14 +150,16 @@ if __name__=="__main__":
     parser.add_argument("--data_type", choices=["wssd", "sunk"], help="Type of data to genotype (wssd or sunk)")
     parser.add_argument("--genotype_method", choices=["raw", "GMM"], help="Output raw (float) or integer (Gaussian Mixture Model) genotypes (choices: raw, GMM)")
 
-    parser.add_argument("--subset")
-    parser.add_argument("--total_subsets")
+    parser.add_argument("--subset", default=0)
+    parser.add_argument("--total_subsets", default=1)
 
     args = parser.parse_args()
 
 #    (o, args) = opts.parse_args()
    
     max_cp = int(args.max_cp)
+    subset = int(args.subset)
+    total_subsets = int(args.total_subsets)
 
     tbx_dups = pysam.Tabixfile(args.fn_dup_tabix)
     GC_inf = GC_data(args.fn_GC_DTS, args.contig, args.fn_DTS_contigs)
@@ -173,7 +175,7 @@ if __name__=="__main__":
     nregions = regions_by_contig.shape[0]
 
     FOUT = open(args.fn_out, 'w')
-    if args.header:
+    if args.contig == "chr1" and subset == 0:
         FOUT.write("contig\tstart\tend\tname\t%s\n"%("\t".join(indivs)))
 
     for i, row in regions_by_contig.iterrows():
@@ -182,9 +184,11 @@ if __name__=="__main__":
             X, idx_s, idx_e = g.get_gt_matrix(contig, s, e)
         else:
             X, idx_s, idx_e = g.get_sunk_gt_matrix(contig, s, e)
+
         if args.genotype_method == "raw":
             gt_list = np.mean(X, 1).tolist()
-            gts = "\t".join(map(str, gt_list))
+            gt_ordered = [gt_list[g.indivs.index(indiv)] for indiv in indivs]
+            gts = "\t".join(map(str, gt_ordered))
         else:
             gts_by_indiv = g.simple_GMM_genotype(X, max_cp=max_cp)
             gts = "\t".join(["%d"%(gts_by_indiv[i]) for i in indivs])
