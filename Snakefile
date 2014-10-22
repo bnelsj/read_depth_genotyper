@@ -2,7 +2,7 @@ import os
 import time
 
 TOTAL_SUBSETS = 1
-SCRIPT_DIR = "~bnelsj/genotyper_gaussian"
+SCRIPT_DIR = "~bnelsj/src/read_depth_genotyper"
 OUTPUT_DIR = "genotypes/subset"
 CHR_OUTPUT_DIR = "genotypes/chr"
 FINAL_OUTPUT_DIR = "genotypes_all"
@@ -51,6 +51,6 @@ rule combine_by_subset:
 rule genotype_by_chr:
     input: "%s/gglob.idx" % GGLOB_DIR
     output: "%s/{chr}.{k}.{method}.{type}" % OUTPUT_DIR
-    params: sge_opts = "-l mfree=16G -N gt_{chr}_{k}_{method}_{type}", max_cp="50"
+    params: sge_opts = "-l mfree=16G -N gt_{chr}_{k}_{method}_{type}", max_cp="50", header_chr = CONTIGS[0]
     shell:
-        "{INIT_MODULES}; python {SCRIPT_DIR}/combine_genotypes.py --regions {REGIONS} --contig {wildcards.chr} --output {output[0]} --gglob_dir {GGLOB_DIR} --genotype_method {wildcards.method} --data_type {wildcards.type} --subset {wildcards.k} --total_subsets {TOTAL_SUBSETS} --max_cp {params.max_cp}"
+        "{INIT_MODULES}; python {SCRIPT_DIR}/combine_genotypes.py --regions {REGIONS} --contig {wildcards.chr} --output {output[0]} --gglob_dir {GGLOB_DIR} --genotype_method {wildcards.method} --data_type {wildcards.type} --subset {wildcards.k} --total_subsets {TOTAL_SUBSETS} --max_cp {params.max_cp} --header_chr {params.header_chr}"
