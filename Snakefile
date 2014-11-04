@@ -10,6 +10,8 @@ GGLOB_DIR = "/net/eichler/vol22/projects/NCS_autism/nobackups/mduyzend/WGS_16p/g
 REGIONS = "BOLA2.bed"
 CONTIGS = ['chr%s' % str(chr) for chr in list(range(1,23)) + ['X', 'Y']]
 
+POP_FILE = "/net/eichler/vol2/eee_shared/1000_genomes/release/20130502/integrated_call_samples_v3.20130502.ALL.panel"
+
 DATA_TYPES = ["wssd", "sunk"]
 GENOTYPE_METHODS = ["raw", "GMM"]
 
@@ -19,8 +21,15 @@ if not os.path.exists("log"):
     os.makedirs("log")
 
 rule all:
-    input: expand("%s/all.{method}.{type}" % FINAL_OUTPUT_DIR, method = GENOTYPE_METHODS, type = DATA_TYPES)
+    input: expand("%s/all.{method}.{type}.long" % FINAL_OUTPUT_DIR, method = GENOTYPE_METHODS, type = DATA_TYPES)
     params: sge_opts = ""
+
+rule make_long_tables:
+    input: "%s/all.{method}.{type}" % FINAL_OUTPUT_DIR
+    output: "%s/all.{method}.{type}.long" % FINAL_OUTPUT_DIR
+    params: sge_opts = '-l mfree=8G -N long_tab'
+    shell:
+       "Rscript {SCRIPT_DIR}/transform_genotypes.R {input} {POP_FILE} {output}"
 
 rule combine_by_chr:
     input: expand("%s/{chr}.{{method}}.{{type}}" % CHR_OUTPUT_DIR, chr=CONTIGS)
