@@ -15,7 +15,7 @@ POP_FILE = "/net/eichler/vol2/eee_shared/1000_genomes/release/20130502/integrate
 DATA_TYPES = ["wssd", "sunk"]
 GENOTYPE_METHODS = ["raw", "GMM"]
 
-INIT_MODULES = "source ~bnelsj/genotyper_gaussian/modules.txt"
+INIT_MODULES = "source %s/modules.txt" % SCRIPT_DIR
 
 if not os.path.exists("log"):
     os.makedirs("log")
