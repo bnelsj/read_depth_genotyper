@@ -29,7 +29,7 @@ rule make_long_tables:
     output: "%s/long/all.{method}.{type}.long" % FINAL_OUTPUT_DIR
     params: sge_opts = '-l mfree=8G -N long_tab'
     shell:
-       "Rscript {SCRIPT_DIR}/transform_genotypes.R {input} {POP_FILE} {output}"
+       "{INIT_MODULES}; Rscript {SCRIPT_DIR}/transform_genotypes.R {input} {POP_FILE} {output}"
 
 rule combine_by_chr:
     input: expand("%s/{chr}.{{method}}.{{type}}" % CHR_OUTPUT_DIR, chr=CONTIGS)
