@@ -21,5 +21,3 @@ export PYTHONPATH=$PYTHONPATH:/net/eichler/vol7/home/psudmant/EEE_Lab/1000G/1000
 module load networkx
 module load bx-python/0.7.1
 module load fastahack-python/0.1
-
-module load python3
