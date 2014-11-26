@@ -8,7 +8,14 @@ CHR_OUTPUT_DIR = "genotypes/chr"
 FINAL_OUTPUT_DIR = "genotypes_all"
 GGLOB_DIR = "/net/eichler/vol22/projects/1000_genomes_phase_II_III/nobackups/gglob"
 REGIONS = "regions.bed"
-CONTIGS = ['chr%s' % str(chr) for chr in list(range(1,23)) + ['X', 'Y']]
+
+CONTIGS = []
+with open(REGIONS, 'r') as regions_file:
+    for line in regions_file:
+        dat = line.rstrip().split()
+        chr = dat[0]
+        if chr not in CONTIGS:
+            CONTIGS.append(chr)
 
 POP_FILE = "/net/eichler/vol2/eee_shared/1000_genomes/release/20130502/integrated_call_samples_v3.20130502.ALL.panel"
 
