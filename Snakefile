@@ -8,7 +8,7 @@ FINAL_OUTPUT_DIR = "genotypes_all"
 GGLOB_DIR = "/net/eichler/vol22/projects/1000_genomes_phase_II_III/nobackups/gglob"
 REGIONS = "regions.bed"
 
-max_cp = 50
+MAX_CP = 50
 
 CONTIGS = []
 with open(REGIONS, 'r') as regions_file:
