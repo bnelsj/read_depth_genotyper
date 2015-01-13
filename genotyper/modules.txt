@@ -1,0 +1,23 @@
+module use /net/eichler/vol7/home/psudmant/local_modules
+export MOD_PS_SW=/net/eichler/vol7/home/psudmant/local_modules_sw
+
+module unload python/2.7.2
+module unload python3
+
+module load python/2.7.2
+module load numpy/1.6.1
+module load scipy/0.10.0
+module load hdf5/1.8.8
+module load pytables/2.3.1_hdf5-1.8.8
+module load R/2.15.0
+
+export PYTHONPATH=$PYTHONPATH:/net/eichler/vol7/home/psudmant/EEE_Lab/1000G/1000genomesScripts
+export PYTHONPATH=$PYTHONPATH:/net/eichler/vol7/home/psudmant/EEE_Lab/1000G/1000genomesScripts/plotting/heatmap_scripts
+export PYTHONPATH=$PYTHONPATH:/net/eichler/vol7/home/psudmant/EEE_Lab/1000G/1000genomesScripts/cython_apis
+export PYTHONPATH=$PYTHONPATH:/net/eichler/vol7/home/psudmant/EEE_Lab/projects/common_code
+export PYTHONPATH=$PYTHONPATH:/net/eichler/vol7/home/psudmant/EEE_Lab/projects/common_code/ssf_DTS_caller
+export PYTHONPATH=$PYTHONPATH:/net/eichler/vol7/home/psudmant/EEE_Lab/1000G/1000genomesScripts/
+
+module load networkx
+module load bx-python/0.7.1
+module load fastahack-python/0.1
