@@ -160,8 +160,8 @@ if __name__=="__main__":
     g = gt.genotyper(args.contig, gglob_dir = args.gglob_dir, plot_dir = args.plot_dir, subset_indivs = indivs, fn_fa=args.fn_fa, dup_tabix = tbx_dups, GC_inf = GC_inf)
 
     regions = pd.read_csv(args.fn_regions, header=None, delimiter="\t", index_col=None)
-    regions.columns = ["contig", "start", "end", "name"]
-    regions_by_contig = regions[regions['contig'] == args.contig]
+    regions.columns = ["chr", "start", "end", "name"]
+    regions_by_contig = regions[regions['chr'] == args.contig]
     nregions = regions_by_contig.shape[0]
 
     FOUT = open(args.fn_out, 'w')

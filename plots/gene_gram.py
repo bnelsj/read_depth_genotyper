@@ -17,7 +17,7 @@ def get_nplots(nsamples, spp):
         nplots += 1
     return nplots
 
-def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_index, first_index = "pop", second_index = "super_pop", sample_names = True, sample_range = [0, 0]):
+def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_column, label_heatmap, first_index = "pop", second_index = "super_pop", sample_names = True, sample_range = [0, 0], yspace = 0.07):
     """
     Plot the given DataFrame as a heatmap.
     """
@@ -55,15 +55,15 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_i
             if second_index is not None:
                 if pop_info.loc[col][second_index] != super_pop_name:
                     super_pop_name = pop_info.loc[col][second_index]
-                    out_label += "_" + super_pop_name
+                    out_label += "." + super_pop_name
             col_labels.append(out_label)
     else:
         col_colors = {}
         color_dict = {group: color_order[i] for i, group in enumerate(pop_info[color_column].unique())}
         for col in df.columns[4:]:
             pop_name = pop_info.loc[col][color_column]
-            if annotate_index:
-                col_label = col + "_" + pop_name
+            if annotate_column is not None:
+                col_label = col + "." + pop_info.loc[col][annotate_column]
             else:
                 col_label = col
             col_labels.append(col_label)
@@ -74,7 +74,9 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_i
     if not sample_names:
         col_labels = ["|" for x in col_labels]
 
-    colors = mpl.colors.ListedColormap(['w', 'gray', 'k', (0, 0, 0.5), (0, 0, 1), 'c', 'g', 'y', 'orange', 'red', 'firebrick'], name='cp_colormap')
+    #colors = mpl.colors.ListedColormap(['w', 'gray', 'k', (0, 0, 0.5), (0, 0, 1), 'c', 'g', 'y', 'orange', 'red', 'firebrick'], name='cp_colormap')
+    color_set = list(plt.cm.Greys(np.linspace(0,1,3))) + list(plt.cm.jet(np.linspace(0,1,8)))
+    colors = mpl.colors.ListedColormap(color_set, name='cp_colormap')
     bounds = [x - 0.5 for x in range(12)]
     norm = mpl.colors.BoundaryNorm(bounds, colors.N)
 
@@ -88,7 +90,7 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_i
     dendro_h = 0.25
     cbar_w = 0.02
     legend_w = 0.1
-    xspace, yspace = 0.05, 0.07
+    xspace, yspace = 0.05, yspace
 
     # [xmin, ymin, width, height]
     heatmap_dims = [xmin, ymin, hmap_w, hmap_h]
@@ -123,7 +125,10 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_i
     sample_dendro = fig.add_axes(sample_dendro_dims)
     Z2 = dendrogram(df_link)
     sample_dendro.set_yticks([])
-    sample_dendro.set_xticklabels(col_labels, rotation=90, fontsize=4)
+    if not label_heatmap:
+        sample_dendro.set_xticklabels(col_labels, rotation=90, fontsize=4)
+    else:
+        sample_dendro.set_xticklabels([" " for label in col_labels], fontsize=4)
 
     # Add grey box to indicate included samples if plotting a subset
     if sample_range[0] != 0 or sample_range[1] != len(col_labels):
@@ -141,15 +146,11 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_i
     axmatrix.set_xticks(range(sample_range[1] - sample_range[0]))
     axmatrix.xaxis.tick_top()
     if sample_names:
-        if hclust:
-            axmatrix.set_xticklabels([])
-        else:
+        if label_heatmap:
             axmatrix.set_xticklabels(col_labels[sample_range[0]:sample_range[1]], rotation=90, fontsize=4)
-    else:
-        if hclust:
-            axmatrix.set_xticklabels([])
         else:
-            axmatrix.set_xticklabels(col_labels[sample_range[0]:sample_range[1]])
+            axmatrix.set_xticklabels([])
+
     map(lambda x: x.set_visible(False), axmatrix.xaxis.get_majorticklines())
     map(lambda x: x.set_visible(False), axmatrix.yaxis.get_majorticklines())
 
@@ -160,12 +161,10 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_i
 
     ######
     if color_indivs:
-        if hclust:
-            map(lambda x: x.set_color(col_colors[x.get_text()]), sample_dendro.get_xticklabels())
-        else:
+        if label_heatmap:
             map(lambda x: x.set_color(col_colors[x.get_text()]), axmatrix.get_xticklabels())
-
-        
+        else:
+            map(lambda x: x.set_color(col_colors[x.get_text()]), sample_dendro.get_xticklabels())
 
     plt.savefig(output_filename)
 
@@ -180,7 +179,9 @@ if __name__ == "__main__":
     parser.add_argument("--color_column", default=None, help="Label every sample and color by specified column from pop file (e.g. super_pop)")
     parser.add_argument("--hclust", action="store_true", help="Group samples using hierarchical clustering")
     parser.add_argument("--exclude_sample_names", action="store_true", help="Use '-' instead of sample name")
-    parser.add_argument("--annotate_index", action="store_true", help="Append index (e.g. super_pop) to sample name")
+    parser.add_argument("--annotate_column", default=None, help="Name of column to append to sample names")
+    parser.add_argument("--label_heatmap", action="store_true", help="Label heatmap instead of dendrogram")
+    parser.add_argument("--yspace", type=float, default = 0.07, help="Amount of space between heatmap and dendrogram (Default: %(default)s)")
     args = parser.parse_args()
 
     df = pd.read_table(args.input_file)
@@ -214,5 +215,5 @@ if __name__ == "__main__":
             plot_name = ".".join([args.output_file_prefix, str(i), args.plot_type])
         else:
             plot_name = ".".join([args.output_file_prefix, args.plot_type])
-        plot_heatmap(df, pop_info, plot_name, args.color_column, args.hclust, args.annotate_index, sample_names = sample_names, sample_range = [start_sample, end_sample])
+        plot_heatmap(df, pop_info, plot_name, args.color_column, args.hclust, args.annotate_column, args.label_heatmap, sample_names = sample_names, sample_range = [start_sample, end_sample], yspace = args.yspace)
 

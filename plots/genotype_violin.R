@@ -13,6 +13,10 @@ input.file <- args[1]
 output.prefix <- args[2]
 region_name <- args[3]
 
+if(length(args) > 3) {
+    height_scale = as.numeric(args[4])
+} else height_scale = 2
+
 copy_nums <- read.table(input.file, header=TRUE)
 filt.copy_nums <- copy_nums[copy_nums$name==region_name,]
 sorted.copy_nums <- filt.copy_nums[with(filt.copy_nums, order(super_pop, pop)),]
@@ -27,17 +31,25 @@ threshold <- mean(filt.copy_nums$copy_num) + 8*sd(filt.copy_nums$copy_num)
 xlab = "Super population"
 ylab = "Copy number"
 
-plot.legend <- ggplot(sorted.copy_nums, aes(x=super_pop, y=copy_num, fill=super_pop)) + geom_violin() + theme_bw() + coord_flip() + xlab(xlab) + ylab(ylab) + scale_y_continuous(breaks=0:max.count, limits=c(-0.5, max.count+0.5))
+plot.legend <- ggplot(sorted.copy_nums, aes(x=super_pop, y=copy_num, fill=super_pop)) + 
+        geom_violin() + theme_bw() + coord_flip() + xlab(xlab) + ylab(ylab) + 
+        scale_y_continuous(breaks=0:max.count, limits=c(-0.5, max.count+0.5))
 
 pop.legend <- g_legend(plot.legend)
 
-p1 <- ggplot(sorted.copy_nums, aes(x=super_pop, y=copy_num, fill=super_pop)) + geom_violin() + geom_jitter(alpha=0.5, shape=1, position = position_jitter(h = 0, w=0.1)) + theme_bw() + coord_flip() + xlab(xlab) + ylab(ylab) + theme(legend.position="none") + scale_y_continuous(breaks=0:max.count, limits=c(-0.5, max.count+0.5))
-p2 <- ggplot(sorted.copy_nums, aes(x=pop, y=copy_num, fill=super_pop)) + geom_violin() + theme_bw() + coord_flip() + xlab("Population") + ylab(ylab) + theme(legend.position="none") + scale_y_continuous(breaks=0:max.count, limits=c(-0.5, max.count+0.5))
+p1 <- ggplot(sorted.copy_nums, aes(x=super_pop, y=copy_num, fill=super_pop)) + 
+    geom_violin() + geom_point(alpha=0.5, colour='black', solid=T, size=1, position = position_jitter(h = 0, w=0.1)) + 
+    theme_bw() + coord_flip() + xlab(xlab) + ylab(ylab) + theme(legend.position="none") + 
+    scale_y_continuous(breaks=0:max.count, limits=c(-0.5, max.count+0.5), minor_breaks=c())
+p2 <- ggplot(sorted.copy_nums, aes(x=pop, y=copy_num)) + 
+    geom_point(alpha=0.5, colour='black', solid=T, size=1, position = position_jitter(h = 0, w=0.1)) + 
+    theme_bw() + coord_flip() + xlab("Population") + ylab(ylab) + theme(legend.position="none", axis.text=element_text(size=6)) + 
+    scale_y_continuous(breaks=0:max.count, limits=c(-0.5, max.count+0.5), minor_breaks=c())
 
-pdf(paste0(output.prefix, ".pdf"), width=12, height=6)
+pdf(paste0(output.prefix, ".pdf"), width=12, height=3*height_scale)
 grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(5/6, 1/6), main=region_name)
 dev.off()
 
-png(paste0(output.prefix, ".png"), width=800, height=400)
+png(paste0(output.prefix, ".png"), width=800, height=200*height_scale)
 grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(5/6, 1/6), main=region_name)
 dev.off()

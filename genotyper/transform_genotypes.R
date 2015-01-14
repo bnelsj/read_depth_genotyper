@@ -11,10 +11,10 @@ summary.file <- args[3]
 # summary.file <- "selected_loci_output.std_dataframe.txt"
 
 data <- read.table(genotypes.file, header=TRUE, check.names=FALSE)
-long.data <- melt(data, id.vars=c("contig", "start", "end", "name"), variable.name="sample", value.name="copy_num")
+long.data <- melt(data, id.vars=c("chr", "start", "end", "name"), variable.name="sample", value.name="copy_num")
 long.data <- long.data[with(long.data, order(sample)), ]
 
-long.data$field = paste(long.data$contig, long.data$start, long.data$end, long.data$name, sep="_")
+long.data$field = paste(long.data$chr, long.data$start, long.data$end, long.data$name, sep="_")
 
 length(long.data$sample)
 
