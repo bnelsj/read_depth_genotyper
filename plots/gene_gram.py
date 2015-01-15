@@ -17,35 +17,30 @@ def get_nplots(nsamples, spp):
         nplots += 1
     return nplots
 
-def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_column, label_heatmap, first_index = "pop", second_index = "super_pop", sample_names = True, sample_range = [0, 0], yspace = 0.07):
+def get_linkage(cns):
+    df_dist = pdist(cns)
+    df_link = linkage(df_dist, method='average')
+#    df_dendro = dendrogram(df_link, labels = cns.index)
+    return df_link
+
+def reorder_df_samples(df, cns, df_link):
+    df_leaves = dendrogram(df_link, labels = cns.index, no_plot=True, distance_sort="descending")['leaves']
+    sample_order = [cns.index[i] for i in df_leaves]
+    df_new = df[["chr", "start", "end", "name"] + sample_order]
+    return df_new
+
+def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_column, label_heatmap, df_link, first_index = "pop", second_index = "super_pop", sample_names = True, sample_range = [0, 0], yspace = 0.07, xmin = 0.04):
     """
     Plot the given DataFrame as a heatmap.
     """
     if color_column is not None:
         color_indivs = True
 
-    pop_to_num = {}
-    pop_to_color = {'AFR': 'red', 'AMR': 'y', 'EAS': 'g', 'EUR': 'b', 'SAS': 'purple'}
-    for pop in pop_info.super_pop:
-        if pop in pop_to_num:
-            pop_to_num[pop] += 1
-        else:
-            pop_to_num[pop] = 1
-
     col_labels = []
     color_order = ["red", "y", "g", "b", "purple", "k", "orange", "c", "firebrick", "gray"]
     unique_pops = []
 
-    if hclust:
-        cns = df[df.columns[4:]].T
-        df_dist = pdist(cns)
-        df_link = linkage(df_dist, method='average')
-        df_dendro = dendrogram(df_link, labels = cns.index)
-        df_leaves = df_dendro['leaves']
-        sample_order = [cns.index[i] for i in df_leaves]
-        df = df[["chr", "start", "end", "name"] + sample_order]
-
-    if not color_indivs:
+    if color_column is None:
         pop_name, super_pop_name = "", ""
         for col in df.columns[4:]:
             out_label = ""
@@ -80,12 +75,12 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_c
     bounds = [x - 0.5 for x in range(12)]
     norm = mpl.colors.BoundaryNorm(bounds, colors.N)
 
-    ### Try dendrogram from example: http://nbviewer.ipython.org/github/OxanaSachenkova/hclust-python/blob/master/hclust.ipynb ###
+    ### Make dendrogram based on example: http://nbviewer.ipython.org/github/OxanaSachenkova/hclust-python/blob/master/hclust.ipynb ###
 
     fig = plt.figure(figsize=(24,15))
 
     # Set size for subpanels
-    xmin, ymin = 0.04, 0.05
+    xmin, ymin = xmin, 0.05
     hmap_w, hmap_h = 0.8, 0.6
     dendro_h = 0.25
     cbar_w = 0.02
@@ -108,12 +103,14 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_c
 
     plt.legend(handles=legend_entries, bbox_to_anchor=sample_legend_dims, borderaxespad=0.)
 
-    Y = linkage(df_dist, method='average')
-
-    ### This is where a region dendrogram should be added if needed (untested)
+    
+    ### Unfinished code for clustering by region
     cluster_regions = False
 
     if cluster_regions:
+        cns = df[df.columns[4:]].T
+        df_dist = pdist(cns)
+        Y = linkage(df_dist, method='average')
         region_dendro = fig.add_axes([0.05,0.1,0.2,0.6])
         Z1 = dendrogram(Y, orientation='right',labels=cns.index) # adding/removing the axes
         ax1.set_yticks([])
@@ -122,21 +119,22 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_c
 
 
     # Compute and plot sample dendrogram.
-    sample_dendro = fig.add_axes(sample_dendro_dims)
-    Z2 = dendrogram(df_link)
-    sample_dendro.set_yticks([])
-    if not label_heatmap:
-        sample_dendro.set_xticklabels(col_labels, rotation=90, fontsize=4)
-    else:
-        sample_dendro.set_xticklabels([" " for label in col_labels], fontsize=4)
+    if hclust:
+        sample_dendro = fig.add_axes(sample_dendro_dims)
+        Z2 = dendrogram(df_link, labels=df.columns[4:], distance_sort="descending")
+        sample_dendro.set_yticks([])
+        if not label_heatmap:
+            sample_dendro.set_xticklabels(col_labels, rotation=90, fontsize=4)
+        else:
+            sample_dendro.set_xticklabels([" " for label in col_labels], fontsize=4)
 
-    # Add grey box to indicate included samples if plotting a subset
-    if sample_range[0] != 0 or sample_range[1] != len(col_labels):
-        xlocs = sample_dendro.xaxis.get_majorticklocs()
-        xmin = xlocs[sample_range[0]]
-        xmax = xlocs[sample_range[1] - 1]
-        ymax = sample_dendro.get_ylim()[1]
-        sample_dendro.add_patch(mpl.patches.Rectangle((xmin, 0), xmax - xmin, ymax, facecolor="grey", edgecolor="none"))
+        # Add grey box to indicate included samples if plotting a subset of samples
+        if sample_range[0] != 0 or sample_range[1] != len(col_labels):
+            xlocs = sample_dendro.xaxis.get_majorticklocs()
+            xmin = xlocs[sample_range[0]]
+            xmax = xlocs[sample_range[1] - 1]
+            ymax = sample_dendro.get_ylim()[1]
+            sample_dendro.add_patch(mpl.patches.Rectangle((xmin, 0), xmax - xmin, ymax, facecolor="grey", edgecolor="none"))
 
     #Compute and plot the heatmap
     axmatrix = fig.add_axes(heatmap_dims)
@@ -160,14 +158,13 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_c
     cbar.ax.set_yticklabels([str(x) for x in range(10)] + ['>9'])
 
     ######
-    if color_indivs:
+    if color_column is not None:
         if label_heatmap:
             map(lambda x: x.set_color(col_colors[x.get_text()]), axmatrix.get_xticklabels())
         else:
             map(lambda x: x.set_color(col_colors[x.get_text()]), sample_dendro.get_xticklabels())
 
     plt.savefig(output_filename)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -182,6 +179,7 @@ if __name__ == "__main__":
     parser.add_argument("--annotate_column", default=None, help="Name of column to append to sample names")
     parser.add_argument("--label_heatmap", action="store_true", help="Label heatmap instead of dendrogram")
     parser.add_argument("--yspace", type=float, default = 0.07, help="Amount of space between heatmap and dendrogram (Default: %(default)s)")
+    parser.add_argument("--xmin", type=float, default = 0.04, help="Amount of whitespace left of heatmap and dendrogram (Default: %(default)s)")
     args = parser.parse_args()
 
     df = pd.read_table(args.input_file)
@@ -208,6 +206,13 @@ if __name__ == "__main__":
     nsamples = len(sample_order)
     nplots = get_nplots(nsamples, args.spp)
 
+    if args.hclust:
+        cns = df[df.columns[4:]].T
+        df_link = get_linkage(cns)
+        df = reorder_df_samples(df, cns, df_link)
+    else:
+        df_link = None
+
     for i in range(nplots):
         start_sample = i * args.spp
         end_sample = min(i * args.spp + args.spp, nsamples)
@@ -215,5 +220,5 @@ if __name__ == "__main__":
             plot_name = ".".join([args.output_file_prefix, str(i), args.plot_type])
         else:
             plot_name = ".".join([args.output_file_prefix, args.plot_type])
-        plot_heatmap(df, pop_info, plot_name, args.color_column, args.hclust, args.annotate_column, args.label_heatmap, sample_names = sample_names, sample_range = [start_sample, end_sample], yspace = args.yspace)
+        plot_heatmap(df, pop_info, plot_name, args.color_column, args.hclust, args.annotate_column, args.label_heatmap, df_link, sample_names = sample_names, sample_range = [start_sample, end_sample], yspace = args.yspace, xmin = args.xmin)
 
