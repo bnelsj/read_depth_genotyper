@@ -1,0 +1,20 @@
+{
+    "script_dir": "/net/eichler/vol5/home/bnelsj/src/read_depth_genotyper",
+    "dataset": "hgdp",
+    "region_file": "/net/eichler/vol5/home/bnelsj/projects/gene_grams/TBC1D3/hgdp_TBC1D3_sunk.genotypes.trimmed.tab",
+    "region_name": "TBC1D3",
+    "output_dir": "plots",
+    "datatype": ["png", "pdf"],
+    "hgdp": {
+        "pop_file": "/net/eichler/vol5/home/bnelsj/projects/gene_grams/cteam_cc_working/C_team.manifest.tab",
+        "gene_gram_settings": "--color_column super_pop --hclust --include_coords --label_heatmap --xmin 0.1 --yspace 0.075",
+        "spp": 500
+    },
+
+    "1kg": {
+        "pop_file": "~bnelsj/projects/gene_grams/integrated_call_samples_v3.20130502.ALL.panel",
+        "gene_gram_settings": "--color_column super_pop --annotate_column pop --hclust --include_coords --label_heatmap --xmin 0.1",
+        "spp": 500
+    }
+
+}
