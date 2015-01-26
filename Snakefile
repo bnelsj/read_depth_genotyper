@@ -12,7 +12,7 @@ if config["data_type"] == "sunk":
 elif config["data_type"] == "wssd":
     DATATYPE_TEXT = ""
 
-REGRESS_NAME = "{dat}/genotypes/{rn}_{type}{rn}.REGRESS.summary".format(dat = config["dataset"], rn = REGION_NAME, type = DATATYPE_TEXT)
+REGRESS_NAME = "{dat}/{rn}_{type}{rn}.REGRESS.summary".format(dat = config["dataset"], rn = REGION_NAME, type = DATATYPE_TEXT)
 GENOTYPE_FILE = config["genotype_file"]
 
 TABLE_DIR = config["table_dir"]
