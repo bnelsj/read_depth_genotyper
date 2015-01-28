@@ -1,25 +1,25 @@
 {
-    "script_dir": "/net/eichler/vol5/home/bnelsj/src/read_depth_genotyper",
-    "dataset": "hgdp",
-    "data_type": "sunk",
+    "script_dir": "read_depth_genotyper",
+    "project_dir": "/net/eichler/vol5/home/bnelsj/projects/gene_grams/hsdg",
+    "datasets": ["hgdp", "1kg"]
+    "data_types": ["sunk", "wssd"]
     "coord_file": "hsdg_coords.bed",
-    "genotype_file": "/net/eichler/vol5/home/bnelsj/projects/gene_grams/hsdg/hgdp_genotypes.tab",
     "region_name": "hsdg",
     "table_dir": "tables",
     "plot_dir": "plots",
     "plot_type": ["png", "pdf"],
+    "spp": 500,
     "hgdp": {
         "pop_file": "/net/eichler/vol5/home/bnelsj/projects/gene_grams/cteam_cc_working/C_team.manifest.tab",
         "gene_gram_settings": "--color_column super_pop --hclust --include_coords --label_heatmap --xmin 0.1 --yspace 0.075",
-        "spp": 500,
-        "name_mapping": "~psudmant/EEE_Lab/1000G/analysis_files/input_genomes_moved/hg19/C_team_name_mappings"
+        "name_mapping": "~psudmant/EEE_Lab/1000G/analysis_files/input_genomes_moved/hg19/C_team_name_mappings",
+        "nplots": 1
     },
 
     "1kg": {
         "pop_file": "/net/eichler/vol2/eee_shared/1000_genomes/release/20130502/integrated_call_samples_v3.20130502.ALL.panel",
         "gene_gram_settings": "--color_column super_pop --annotate_column pop --hclust --include_coords --label_heatmap --xmin 0.1",
-        "spp": 500,
-        "name_mapping": ""
+        "nplots": 5 
     }
 
 }

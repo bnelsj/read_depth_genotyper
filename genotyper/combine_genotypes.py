@@ -166,10 +166,10 @@ if __name__=="__main__":
 
     FOUT = open(args.fn_out, 'w')
     if args.contig == args.header_chr and subset == 0:
-        FOUT.write("contig\tstart\tend\tname\t%s\n"%("\t".join(indivs)))
+        FOUT.write("chr\tstart\tend\tname\t%s\n"%("\t".join(indivs)))
 
     for i, row in regions_by_contig.iterrows():
-        contig, s, e, name = row['contig'], int(row['start']), int(row['end']), row['name']
+        contig, s, e, name = row['chr'], int(row['start']), int(row['end']), row['name']
         if args.data_type == "wssd":
             X, idx_s, idx_e = g.get_gt_matrix(contig, s, e)
         else:
