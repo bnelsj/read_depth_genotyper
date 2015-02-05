@@ -29,7 +29,7 @@ def reorder_df_samples(df, cns, df_link):
     df_new = df[["chr", "start", "end", "name"] + sample_order]
     return df_new
 
-def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_column, label_heatmap, df_link, first_index = "pop", second_index = "super_pop", sample_names = True, sample_range = [0, 0], yspace = 0.07, xmin = 0.04, include_coords = False):
+def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_column, label_heatmap, df_link, first_index = "pop", second_index = "super_pop", sample_names = True, sample_range = [0, 0],  xspace = 0.05, yspace = 0.07, xmin = 0.04, include_coords = False):
     """
     Plot the given DataFrame as a heatmap.
     """
@@ -37,7 +37,7 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_c
         color_indivs = True
 
     col_labels = []
-    color_order = ["red", "y", "g", "b", "purple", "k", "orange", "c", "firebrick", "gray"]
+    color_order = ["red", "y", "g", "b", "purple", "k", "orange", "c", "firebrick", "gray", "pink", "aqua", "darkgray", "indigo", "gold", "lime", "magenta", "maroon", "olive"]
     unique_pops = []
 
     if color_column is None:
@@ -90,7 +90,7 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_c
     dendro_h = 0.25
     cbar_w = 0.02
     legend_w = 0.1
-    xspace, yspace = 0.05, yspace
+    xspace, yspace = xspace, yspace
 
     # [xmin, ymin, width, height]
     heatmap_dims = [xmin, ymin, hmap_w, hmap_h]
@@ -160,7 +160,7 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_c
     # Plot colorbar.
     axcolor = fig.add_axes(colorbar_dims)
     cbar = plt.colorbar(heatmap, cax=axcolor, ticks=range(11))
-    cbar.ax.set_yticklabels([str(x) for x in range(10)] + ['>9'])
+    cbar.ax.set_yticklabels([str(x) for x in range(10)] + ['10+'])
 
     ######
     if color_column is not None:
@@ -183,6 +183,7 @@ if __name__ == "__main__":
     parser.add_argument("--exclude_sample_names", action="store_true", help="Use '-' instead of sample name")
     parser.add_argument("--annotate_column", default=None, help="Name of column to append to sample names")
     parser.add_argument("--label_heatmap", action="store_true", help="Label heatmap instead of dendrogram")
+    parser.add_argument("--xspace", type=float, default = 0.05, help="Amount of space between heatmap and colorbar/legend (Default: %(default)s)")
     parser.add_argument("--yspace", type=float, default = 0.07, help="Amount of space between heatmap and dendrogram (Default: %(default)s)")
     parser.add_argument("--xmin", type=float, default = 0.04, help="Amount of whitespace left of heatmap and dendrogram (Default: %(default)s)")
     parser.add_argument("--include_coords", action="store_true", help="Annotate regions with genomic coordinates")
@@ -225,5 +226,5 @@ if __name__ == "__main__":
         start_sample = i * spp
         end_sample = min(i * spp + spp, nsamples)
         plot_name = ".".join([args.output_file_prefix, str(i), args.plot_type])
-        plot_heatmap(df, pop_info, plot_name, args.color_column, args.hclust, args.annotate_column, args.label_heatmap, df_link, sample_names = sample_names, sample_range = [start_sample, end_sample], yspace = args.yspace, xmin = args.xmin, include_coords = args.include_coords)
+        plot_heatmap(df, pop_info, plot_name, args.color_column, args.hclust, args.annotate_column, args.label_heatmap, df_link, sample_names = sample_names, sample_range = [start_sample, end_sample], xspace = args.xspace, yspace = args.yspace, xmin = args.xmin, include_coords = args.include_coords)
 

@@ -16,20 +16,17 @@ long.data <- long.data[with(long.data, order(sample)), ]
 
 long.data$field = paste(long.data$chr, long.data$start, long.data$end, long.data$name, sep="_")
 
-length(long.data$sample)
-
 populations <- read.table(populations.file, header=TRUE)
 included.samples <- long.data$sample[long.data$sample %in% populations$sample]
 
 long.data = long.data[long.data$sample %in% included.samples,]
+populations$super_pop <- factor(populations$super_pop, levels = unique(populations$super_pop), ordered = TRUE)
+populations <- populations[with(populations, order(populations$super_pop)), ]
 
-populations <- populations[with(populations, order(included.samples)), ]
-length(populations$sample)
+merged.data <- merge(long.data, populations, by="sample", all.x=TRUE, sort=FALSE)
 
-merged.data <- merge(long.data, populations, by="sample", all.x=TRUE)
-length(merged.data$sample)
-
-std_dataframe <- merged.data[, c("super_pop", "pop", "sample", "gender", "field", "name", "copy_num")]
-length(std_dataframe$sample)
+std_dataframe <- merged.data[, c("super_pop", "pop", "sample", "sex", "field", "name", "copy_num")]
+std_dataframe$super_pop <- factor(std_dataframe$super_pop, levels = unique(populations$super_pop), ordered = TRUE)
+std_dataframe <- std_dataframe[with(std_dataframe, order(std_dataframe$super_pop)), ]
 
 write.table(std_dataframe, file=summary.file, quote=FALSE, sep="\t", row.names=FALSE)

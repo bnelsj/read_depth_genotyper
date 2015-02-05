@@ -20,6 +20,11 @@ if(length(args) > 4) {
 
 copy_nums <- read.table(input.file, header=TRUE)
 filt.copy_nums <- copy_nums[copy_nums$name==region_name,]
+
+legend_cn = filt.copy_nums
+legend_cn$super_pop = factor(legend_cn$super_pop, levels = unique(filt.copy_nums$super_pop), ordered = TRUE)
+
+filt.copy_nums$super_pop <- factor(filt.copy_nums$super_pop, levels = rev(unique(filt.copy_nums$super_pop)), ordered = TRUE)
 sorted.copy_nums <- filt.copy_nums[with(filt.copy_nums, order(super_pop, pop)),]
 sorted.copy_nums$pop <- factor(sorted.copy_nums$pop, levels=unique(sorted.copy_nums$pop))
 
@@ -32,7 +37,7 @@ threshold <- mean(filt.copy_nums$copy_num) + 8*sd(filt.copy_nums$copy_num)
 xlab = "Super population"
 ylab = "Copy number"
 
-plot.legend <- ggplot(sorted.copy_nums, aes(x=super_pop, y=copy_num, fill=super_pop)) + 
+plot.legend <- ggplot(legend_cn, aes(x=super_pop, y=copy_num, fill=super_pop)) + 
         geom_violin() + theme_bw() + coord_flip() + xlab(xlab) + ylab(ylab) + 
         scale_y_continuous(breaks=0:max.count, limits=c(-0.5, max.count+0.5))
 
@@ -49,10 +54,10 @@ p2 <- ggplot(sorted.copy_nums, aes(x=pop, y=copy_num)) +
 
 if(output.type == "pdf") {
     pdf(output.prefix, width=12, height=3*height_scale)
-    grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(5/6, 1/6), main=region_name)
+    grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(5/6, 1/6), main=output.prefix)
     dev.off()
 } else if(output.type == "png") {
 png(output.prefix, width=800, height=200*height_scale)
-grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(5/6, 1/6), main=region_name)
+grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(5/6, 1/6), main=output.prefix)
 dev.off()
 } else print(paste("Unsupported file type", output.type))
