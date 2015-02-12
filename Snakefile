@@ -158,7 +158,7 @@ rule get_combined_pdfs:
 rule combine_violin_pdfs:
     input: expand("%s/{plottype}/{name}_{dataset}_{plottype}_{datatype}.pdf" % (PLOT_DIR), plottype = ["violin", "scatter"], name = get_region_names(COORDS), dataset = config["dataset"], datatype = config["data_type"])
     output: "%s/violin_{datatype}.pdf" % PLOT_DIR, "%s/scatter_{datatype}.pdf" % PLOT_DIR
-    params: sge_opts = "-l mfree=8G -n pdf_combine"
+    params: sge_opts = "-l mfree=8G -N pdf_combine"
     run:
         for pt in ["violin", "scatter"]:
             shell("""gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile={PLOT_DIR}/{pt}_{wildcards.datatype}.pdf plots/{pt}/*{pt}_{wildcards.datatype}.pdf""")
