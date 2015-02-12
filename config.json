@@ -1,25 +1,32 @@
 {
-    "script_dir": "read_depth_genotyper",
-    "project_dir": "/net/eichler/vol5/home/bnelsj/projects/gene_grams/hsdg",
-    "datasets": ["hgdp", "1kg"]
-    "data_types": ["sunk", "wssd"]
-    "coord_file": "hsdg_coords.bed",
-    "region_name": "hsdg",
+    "script_dir": "/net/eichler/vol5/home/bnelsj/src/read_depth_genotyper",
+    "dataset": ["1kg", "hgdp"],
+    "master_manifest": "/net/eichler/vol2/eee_shared/whole_genome_resources/all_diversity.manifest.filtered.tab",
+    "gene_families":    [
+							"ARHGAP11"
+                        ],
+	"build": "GRCh37",
+	"pop_codes": "/net/eichler/vol5/home/bnelsj/src/read_depth_genotyper/plotting/super_pop_codes.tab",
+    "data_type": ["wssd", "sunk"],
     "table_dir": "tables",
     "plot_dir": "plots",
-    "plot_type": ["png", "pdf"],
+    "plot_file_type": ["png", "pdf"],
+    "gene_gram_settings": "--color_column super_pop --hclust --include_coords --label_heatmap --xmin 0.05 --yspace 0.075 --xspace 0.08",
     "spp": 500,
-    "hgdp": {
-        "pop_file": "/net/eichler/vol5/home/bnelsj/projects/gene_grams/cteam_cc_working/C_team.manifest.tab",
-        "gene_gram_settings": "--color_column super_pop --hclust --include_coords --label_heatmap --xmin 0.1 --yspace 0.075",
-        "name_mapping": "~psudmant/EEE_Lab/1000G/analysis_files/input_genomes_moved/hg19/C_team_name_mappings",
-        "nplots": 1
-    },
-
-    "1kg": {
-        "pop_file": "/net/eichler/vol2/eee_shared/1000_genomes/release/20130502/integrated_call_samples_v3.20130502.ALL.panel",
-        "gene_gram_settings": "--color_column super_pop --annotate_column pop --hclust --include_coords --label_heatmap --xmin 0.1",
-        "nplots": 5 
-    }
-
+    "hgdp":     { 
+                    "pop_file": "/net/eichler/vol2/eee_shared/whole_genome_resources/hgdp/hgdp.manifest.filtered.tab",
+                    "name_mapping": "/net/eichler/vol2/eee_shared/whole_genome_resources/hgdp/name_mapping"
+                },
+    "1kg":      {
+                    "pop_file": "/net/eichler/vol2/eee_shared/whole_genome_resources/1kg/1kg.manifest.filtered.tab",
+                    "name_mapping": ""
+                },
+    "archaics": {
+                    "pop_file": "/net/eichler/vol2/eee_shared/whole_genome_resources/archaics/archaics.manifest.filtered.tab",
+                    "name_mapping": "/net/eichler/vol2/eee_shared/whole_genome_resources/archaics/name_mapping"
+                },
+    "nhp":      {
+                    "pop_file": "/net/eichler/vol2/eee_shared/whole_genome_resources/nhp/nhp.manifest.filtered.tab",
+                    "name_mapping": ""
+                }
 }
