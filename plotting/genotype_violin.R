@@ -65,10 +65,10 @@ if(include_violin) {
 
 if(output.type == "pdf") {
     pdf(output.prefix, width=12, height=3*3)
-    grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(5/6, 1/6), main=plot.title)
+    grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(4/5, 1/5), main=plot.title)
     dev.off()
 } else if(output.type == "png") {
 png(output.prefix, width=800, height=200*3)
-grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(5/6, 1/6), main=plot.title)
+grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(4/5, 1/5), main=plot.title)
 dev.off()
 } else print(paste("Unsupported file type", output.type))
