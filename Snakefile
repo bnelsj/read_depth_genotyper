@@ -77,7 +77,7 @@ rule get_cn_wssd_variance:
     params: sge_opts = "-l mfree=2G -N get_var", families = config["gene_families"]
     run:
         wssd_stats = pd.DataFrame(columns=["name"])
-        datasets = ["1kg", "hgdp"]
+        datasets = config["dataset"]
         size = []
         for i, dataset in enumerate(datasets):
             wssd_mean, wssd_std, cn_two = [], [], []
@@ -105,7 +105,7 @@ rule get_cn_sunk_variance:
     output: "%s/sunk_stats_by_region.tab" % TABLE_DIR
     params: sge_opts = "-l mfree=2G -N get_var", families = config["gene_families"]
     run:
-        datasets = ["1kg", "hgdp"]
+        datasets = config["dataset"]
         sunk_stats = pd.DataFrame(columns = ["name"])
         names = []
         for i, dataset in enumerate(datasets):

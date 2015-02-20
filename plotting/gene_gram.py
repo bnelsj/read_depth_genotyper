@@ -18,7 +18,7 @@ def get_nplots(nsamples, spp):
     return nplots
 
 def get_linkage(cns):
-    df_dist = pdist(cns)
+    df_dist = pdist(cns, "seuclidean")
     df_link = linkage(df_dist, method='average')
 #    df_dendro = dendrogram(df_link, labels = cns.index)
     return df_link
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     parser.add_argument("--include_coords", action="store_true", help="Annotate regions with genomic coordinates")
     args = parser.parse_args()
 
-    df = pd.read_table(args.input_file)
+    df = pd.read_table(args.input_file, na_values="NA")
     pop_info = pd.read_csv(args.pop_file, sep='\t')
     pop_info.sort(columns=["super_pop", "pop"], inplace=True, axis=0)
 
