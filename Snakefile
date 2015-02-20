@@ -66,7 +66,7 @@ rule all:
             expand("%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR),
             fam = config["gene_families"], dataset = config["dataset"], datatype = config["data_type"], file_type = config["plot_file_type"]),
             expand("%s/violin/{name}_{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR),
-            dataset = config["dataset"], name = get_region_names(COORDS), datatype = config["data_type"], file_type = config["plot_file_type"]),
+            dataset = config["main_dataset"], name = get_region_names(COORDS), datatype = config["data_type"], file_type = config["plot_file_type"]),
             expand("%s/{plottype}_{datatype}.pdf" % PLOT_DIR, plottype=["violin", "scatter"], datatype = config["data_type"])
     params: sge_opts=""
 
@@ -156,7 +156,7 @@ rule get_combined_pdfs:
     params: ""
 
 rule combine_violin_pdfs:
-    input: expand("%s/{plottype}/{name}_{dataset}_{plottype}_{datatype}.pdf" % (PLOT_DIR), plottype = ["violin", "scatter"], name = get_region_names(COORDS), dataset = config["dataset"], datatype = config["data_type"])
+    input: expand("%s/{plottype}/{name}_{dataset}_{plottype}_{datatype}.pdf" % (PLOT_DIR), plottype = ["violin", "scatter"], name = get_region_names(COORDS), dataset = config["main_dataset"], datatype = config["data_type"])
     output: "%s/violin_{datatype}.pdf" % PLOT_DIR, "%s/scatter_{datatype}.pdf" % PLOT_DIR
     params: sge_opts = "-l mfree=8G -N pdf_combine"
     run:
@@ -183,28 +183,43 @@ rule get_long_table:
         pop_codes = config["pop_codes"]
         shell("""Rscript {SCRIPT_DIR}/genotyper/transform_genotypes.R {input.regions} {pop_file} {pop_codes} {wildcards.dataset} {output}""")
 
-rule convert_genotypes:
-    input: "{fam}/{fam}.coords.bed"
+rule combine_genotypes:
+    input: expand("{{fam}}/{ds}/{ds}_{{datatype}}_genotypes.tab", ds = config["dataset"])
     output: "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
-    params: sge_opts="-l mfree=2G -N convert_genotypes"
+    params: sge_opts="-l mfree=2G -N combine_gt"
     run:
         fam = wildcards.fam
-        datatype = wildcards.datatype
-        for dataset in [wildcards.dataset, "archaics", "nhp"]:
-            if datatype == "wssd":
-                fn_gt = "_"
-            else:
-                fn_gt = "_sunk_"
-            shell("""awk 'OFS="\t" {{ print $1":"$2"-"$3,$4 }}' {input[0]} | sort -k 1,1 > {fam}/{dataset}/{fam}_names.tab
-                     sed 's/\s\+/\t/g' {fam}/{dataset}/{fam}{fn_gt}{fam}.REGRESS.summary | sed 1d | cut -f 5- | sort -k 1,1 > {fam}/{dataset}/{fam}{fn_gt}{fam}.REGRESS.summary.tab
-                     join -j 1 {fam}/{dataset}/{fam}_names.tab {fam}/{dataset}/{fam}{fn_gt}{fam}.REGRESS.summary.tab | sed 's/\s\+/\t/g;s/[-:]/\t/g' > {fam}/{dataset}/{fam}{fn_gt}{fam}.REGRESS.summary.named.tab
-                     head -n 1 {fam}/{dataset}/{fam}{fn_gt}{fam}.REGRESS.summary | sed 's/\s\+/\t/g' | cut -f 2-4,6- | awk 'OFS="\t" {{ $3=$3"\tname"; print }}' > {fam}/{dataset}/{fam}{fn_gt}{fam}.REGRESS.summary.header.tab
-                     cat {fam}/{dataset}/{fam}{fn_gt}{fam}.REGRESS.summary.header.tab {fam}/{dataset}/{fam}{fn_gt}{fam}.REGRESS.summary.named.tab > {fam}/{dataset}/{dataset}_{datatype}_genotypes.tab""")
-            name_mapping = config[dataset]["name_mapping"]
-            if name_mapping != "":
-                shell("""while read line; do set -- $line; sed -i "s/$1/$2/g" {fam}/{dataset}/{dataset}_{datatype}_genotypes.tab; done < {name_mapping}""")
-            if dataset in ["1kg", "hgdp"]:
-                shell("""cp {fam}/{dataset}/{dataset}_{datatype}_genotypes.tab {output[0]}.tmp""")
-            else:
-                shell("""cut -f 1-4 --complement {fam}/{dataset}/{dataset}_{datatype}_genotypes.tab | paste {output[0]}.tmp /dev/stdin > {output[0]}
-                        cp {output[0]} {output[0]}.tmp""")
+        dt = wildcards.datatype
+        ds = wildcards.dataset
+        main_ds = pd.read_csv("{fam}/{ds}/{ds}_{dt}_genotypes.tab".format(fam=fam, ds=ds, dt=dt), header=0, sep="\t", index_col=False, na_values="NA")
+        for app_ds in config["append_dataset"]:
+            if app_ds != ds:
+                append_dataset = pd.read_csv("{fam}/{app_ds}/{app_ds}_{dt}_genotypes.tab".format(fam=fam, app_ds=app_ds, dt=dt), header=0, sep="\t", index_col=False)
+                main_ds = main_ds.merge(append_dataset, on=["chr", "start", "end", "name"])
+        main_ds.to_csv("{fam}/{fam}.{ds}.combined.{dt}.bed".format(fam=fam, ds=ds, dt=dt), index=False, sep="\t", na_rep="NA")
+
+rule convert_genotypes:
+    input:  coords = "{fam}/{fam}.coords.bed",
+            sunk = "{fam}/{ds}/{fam}_sunk_{fam}.REGRESS.summary",
+            wssd = "{fam}/{ds}/{fam}_{fam}.REGRESS.summary"
+    output: "{fam}/{ds}/{ds}_sunk_genotypes.tab", "{fam}/{ds}/{ds}_wssd_genotypes.tab"
+    params: sge_opts = "-N convert_gts"
+    run:
+        pop_file = pd.read_csv(config[wildcards.ds]["pop_file"], header=0, sep=r"\s*", index_col=False)
+        regions = pd.read_csv(input.coords, header = None, sep = r"\s*", index_col=False)
+        regions.columns = ["chr", "start", "end", "name"]
+        for num, file in enumerate([input.sunk, input.wssd]):
+            cns = pd.read_csv(file, header = 0, sep = r"\s*", index_col=False)
+            new_cns_cols = cns.columns.tolist()
+            if config[wildcards.ds]["name_mapping"] != "":
+                name_mapping = pd.read_csv(config[wildcards.ds]["name_mapping"], sep=" ", header=None, index_col=0)
+                for i, col in enumerate(new_cns_cols):
+                    if col in name_mapping.index:
+                        new_cns_cols[i] = name_mapping.loc[col].tolist()[0]
+
+            cns.columns = new_cns_cols
+            include_samples = [sn for sn in new_cns_cols if sn in pop_file["sample"].tolist()]
+            
+            cns = cns[["chr", "start", "end"] + include_samples]
+            data = regions.merge(cns, on=["chr", "start", "end"])
+            data.to_csv(output[num], index=False, sep="\t", na_rep = "NA")
