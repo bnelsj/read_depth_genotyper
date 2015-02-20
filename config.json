@@ -1,12 +1,14 @@
 {
     "script_dir": "/net/eichler/vol5/home/bnelsj/src/read_depth_genotyper",
-    "dataset": ["1kg", "hgdp"],
-    "master_manifest": "/net/eichler/vol2/eee_shared/whole_genome_resources/all_diversity.manifest.filtered.tab",
+    "dataset": ["1kg", "simons"],
+	"main_dataset": ["simons"],
+	"append_dataset": ["1kg"],
+    "master_manifest": "/net/eichler/vol5/home/bnelsj/projects/simons/cores_cc/master.simons.manifest.filtered.tab",
     "gene_families":    [
-							"ARHGAP11"
+							"core_duplicon_genes"
                         ],
 	"build": "GRCh37",
-	"pop_codes": "/net/eichler/vol5/home/bnelsj/src/read_depth_genotyper/plotting/super_pop_codes.tab",
+	"pop_codes": "plotting/super_pop_codes.tab",
     "data_type": ["wssd", "sunk"],
     "table_dir": "tables",
     "plot_dir": "plots",
@@ -28,5 +30,9 @@
     "nhp":      {
                     "pop_file": "/net/eichler/vol2/eee_shared/whole_genome_resources/nhp/nhp.manifest.filtered.tab",
                     "name_mapping": ""
-                }
+                },
+	"simons":	{
+					"pop_file": "/net/eichler/vol5/home/bnelsj/projects/simons/cores_cc/simons.manifest.filtered.tab",
+					"name_mapping": ""
+				}
 }
