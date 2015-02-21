@@ -28,10 +28,8 @@ pop.names.table <- read.table(pop.names.file, header=TRUE, sep="\t")
 for(i in 1:length(row.names(populations))) {
   super_pop_i <- as.character(populations$code[i])
   if(super_pop_i %in% pop.names.table$super_pop) {
-	if(dataset == "1kg") {
-		populations$code[i] = as.character(pop.names.table[pop.names.table$dataset == "1kg" && pop.names.table$super_pop == super_pop_i, "code"])
-	} else if(dataset == "hgdp") {
-		populations$code[i] = as.character(pop.names.table[pop.names.table$dataset == "hgdp" && pop.names.table$super_pop == super_pop_i, "code"])
+	if(dataset %in% c("1kg", "hgdp")) {
+		populations$code[i] = as.character(pop.names.table[pop.names.table$dataset == dataset,][pop.names.table$super_pop == super_pop_i, "code"])
 	} else {
 		populations$code[i] = as.character(pop.names.table[pop.names.table$super_pop == super_pop_i, "code"])
 	}

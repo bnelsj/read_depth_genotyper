@@ -1,11 +1,11 @@
 {
     "script_dir": "/net/eichler/vol5/home/bnelsj/src/read_depth_genotyper",
-    "dataset": ["1kg", "simons"],
-	"main_dataset": ["simons"],
-	"append_dataset": ["1kg"],
-    "master_manifest": "/net/eichler/vol5/home/bnelsj/projects/simons/cores_cc/master.simons.manifest.filtered.tab",
+    "dataset": ["1kg", "hgdp", "archaics", "nhp"],
+	"main_dataset": ["1kg", "hgdp"],
+	"append_dataset": ["archaics", "nhp"],
+    "master_manifest": "/net/eichler/vol2/eee_shared/whole_genome_resources/all_diversity.manifest.filtered.tab",
     "gene_families":    [
-							"core_duplicon_genes"
+							"POM121"
                         ],
 	"build": "GRCh37",
 	"pop_codes": "plotting/super_pop_codes.tab",

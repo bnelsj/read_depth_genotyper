@@ -4,6 +4,8 @@ import pandas as pd
 
 configfile: "config.json"
 
+CWD = os.getcwd()
+
 COORDS = ["%s/%s.coords.bed" % (fam, fam) for fam in config["gene_families"]]
 
 TABLE_DIR = config["table_dir"]
@@ -15,7 +17,7 @@ for folder in DIRS_TO_MAKE:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-SCRIPT_DIR = config["script_dir"]
+SCRIPT_DIR = CWD
 GENE_GRAM_SETTINGS = config.get("gene_gram_settings", "")
 SPP = config.get("spp", 500)
 
