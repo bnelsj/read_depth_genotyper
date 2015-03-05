@@ -1,12 +1,14 @@
 import os
 import time
 
+configfile: "../config.json"
+
 TOTAL_SUBSETS = 1
 SCRIPT_DIR = "~bnelsj/src/read_depth_genotyper/genotyper"
 CHR_OUTPUT_DIR = "genotypes/chr"
 FINAL_OUTPUT_DIR = "genotypes_all"
-GGLOB_DIR = "/net/eichler/vol22/projects/1000_genomes_phase_II_III/nobackups/gglob"
-REGIONS = "regions.bed"
+GGLOB_DIR = "/net/eichler/vol19/projects/human_population_sequencing/nobackups/psudmant/wnd_output_DTS/hg19/C_team/gglob_renamed_no_arch"
+REGIONS = "/net/eichler/vol5/home/bnelsj/projects/hsdg/5q11/read_depth_genotyper/5q11/5q11.coords.bed"
 
 MAX_CP = 50
 
@@ -39,12 +41,14 @@ rule prep_for_plotting:
     input: expand("%s/long/all.{method}.{type}.long" % FINAL_OUTPUT_DIR, method = GENOTYPE_METHODS, type = DATA_TYPES)
     params: sge_opts = ""
 
-rule make_long_tables:
-    input: "%s/all.{method}.{type}" % FINAL_OUTPUT_DIR
+rule get_long_table:
+    input: regions = "%s/all.{method}.{type}" % FINAL_OUTPUT_DIR
     output: "%s/long/all.{method}.{type}.long" % FINAL_OUTPUT_DIR
-    params: sge_opts = '-l mfree=8G -N long_tab'
-    shell:
-       "{INIT_MODULES}; Rscript {SCRIPT_DIR}/transform_genotypes.R {input} {POP_FILE} {output}"
+    params: sge_opts = "-l mfree=8G -N make_long_table"
+    run:
+        pop_file = config["master_manifest"]
+        pop_codes = "../plotting/super_pop_codes.tab"
+        shell("""Rscript transform_genotypes.R {input.regions} {pop_file} {pop_codes} hgdp {output}""")
 
 rule combine_by_chr:
     input: expand("%s/{chr}.{{method}}.{{type}}" % CHR_OUTPUT_DIR, chr=CONTIGS)

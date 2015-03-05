@@ -13,29 +13,29 @@ summary.file <- args[5]
 # summary.file <- "selected_loci_output.std_dataframe.txt"
 
 data <- read.table(genotypes.file, header=TRUE, check.names=FALSE)
+pop.names.table <- read.table(pop.names.file, header=TRUE, sep="\t")
+populations <- read.table(populations.file, header=TRUE)
+
 long.data <- melt(data, id.vars=c("chr", "start", "end", "name"), variable.name="sample", value.name="copy_num")
 long.data <- long.data[with(long.data, order(sample)), ]
 
 long.data$field = paste(long.data$chr, long.data$start, long.data$end, long.data$name, sep="_")
 
-populations <- read.table(populations.file, header=TRUE)
 included.samples <- long.data$sample[long.data$sample %in% populations$sample]
-#included.pops <- populations[populations$sample %in% included.samples]
-populations$code = populations$super_pop
-populations$code = as.character(populations$code)
+long.data = long.data[long.data$sample %in% included.samples,]
+#included.pops <- populations[populations$sample %in% included.samples,]
+populations$code = as.character(populations$super_pop)
 
-pop.names.table <- read.table(pop.names.file, header=TRUE, sep="\t")
 for(i in 1:length(row.names(populations))) {
   super_pop_i <- as.character(populations$code[i])
-  if(super_pop_i %in% pop.names.table$super_pop) {
-	if(dataset %in% c("1kg", "hgdp")) {
-		populations$code[i] = as.character(pop.names.table[pop.names.table$dataset == dataset,][pop.names.table$super_pop == super_pop_i, "code"])
-	} else {
-		populations$code[i] = as.character(pop.names.table[pop.names.table$super_pop == super_pop_i, "code"])
-	}
+  if(dataset %in% pop.names.table$dataset) {
+    codes = pop.names.table[pop.names.table$dataset == dataset,]
+    if(super_pop_i %in% codes$super_pop) {
+	  populations$code[i] = as.character(codes[codes$super_pop == super_pop_i, "code"])
+    }
   }
 }
-long.data = long.data[long.data$sample %in% included.samples,]
+
 populations$super_pop <- factor(populations$super_pop, levels = unique(populations$super_pop), ordered = TRUE)
 populations <- populations[with(populations, order(populations$super_pop)), ]
 #pops.merged <- merge(populations, included.pops, by="super_pop", all.x=TRUE, sort=FALSE)
