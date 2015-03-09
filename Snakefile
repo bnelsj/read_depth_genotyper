@@ -214,7 +214,7 @@ rule convert_genotypes:
             cns = pd.read_csv(file, header = 0, sep = r"\s*", index_col=False)
             new_cns_cols = cns.columns.tolist()
             if config[wildcards.ds]["name_mapping"] != "":
-                name_mapping = pd.read_csv(config[wildcards.ds]["name_mapping"], sep=" ", header=None, index_col=0)
+                name_mapping = pd.read_csv(config[wildcards.ds]["name_mapping"], sep=r"\s*", header=None, index_col=0)
                 for i, col in enumerate(new_cns_cols):
                     if col in name_mapping.index:
                         new_cns_cols[i] = name_mapping.loc[col].tolist()[0]
