@@ -8,8 +8,8 @@ simons	s1	s1_unaffected_sibling
 1kg	EAS	EAS_East_Asian
 1kg	EUR	EUR_European
 1kg	SAS	SAS_South_Asian
-1kg	ARC ARC_Archaics
-1kg	D&N D&N_Denisova_and_Neanderthal
+1kg	ARC	ARC_Archaics
+1kg	D&N	D&N_Denisova_and_Neanderthal
 hgdp	AFR	AFR_African
 hgdp	AMR	AMR_Americas
 hgdp	EA	EA_East_Asian
