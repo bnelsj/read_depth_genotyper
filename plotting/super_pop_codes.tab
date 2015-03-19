@@ -13,9 +13,11 @@ hgdp	AMR	AMR_Americas
 hgdp	EA	EA_East_Asian
 hgdp	OCN	OCN_Oceanic
 hgdp	SA	SA_South_Asian
-hgdp	SIB	SIB_Siberia
+hgdp	SIB	SIB_Siberian
 hgdp	WEA	WEA_Western_European
-archaics	ARC	ARC_Archaic
+hgdp	ARC	ARC_Archaics
+hgdp	D&N	D&N_Denisova_and_Neanderthal
+archaics	ARC	ARC_Archaics
 archaics	D&N	D&N_Denisova_and_Neanderthal
 nhp	BONOBO	Bonobo
 nhp	CHIMPANZEE	Chimpanzee
