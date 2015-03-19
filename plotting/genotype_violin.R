@@ -16,6 +16,7 @@ output.type <- args[4]
 plot.title <- args[5]
 
 include_violin = "violin" %in% args
+super_pop_only = "super_pop_only" %in% args
 
 copy_nums <- read.table(input.file, header=TRUE)
 filt.copy_nums <- copy_nums[copy_nums$name==region.name,]
@@ -63,7 +64,17 @@ if(include_violin) {
     scale_y_continuous(breaks=0:max.count, limits=c(-0.5, max.count+0.5), minor_breaks=c())
 }
 
-if(output.type == "pdf") {
+if(super_pop_only) {
+  if(output.type == "pdf") {
+	  pdf(output.prefix, width=12, height=3)
+	  grid.arrange(p1, pop.legend, ncol=2, widths=c(4/5, 1/5), main=plot.title)
+	  dev.off()
+  } else if(output.type == "png") {
+  png(output.prefix, width=800, height=200)
+  grid.arrange(p1, pop.legend, ncol=2, widths=c(4/5, 1/5), main=plot.title)
+  dev.off()
+  } else print(paste("Unsupported file type", output.type))
+} else if(output.type == "pdf") {
     pdf(output.prefix, width=12, height=3*3)
     grid.arrange(arrangeGrob(p1, p2, ncol=2), pop.legend, ncol=2, widths=c(4/5, 1/5), main=plot.title)
     dev.off()

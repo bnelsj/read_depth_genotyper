@@ -69,7 +69,7 @@ rule all:
             fam = config["gene_families"], dataset = config["dataset"], datatype = config["data_type"], file_type = config["plot_file_type"]),
             expand("%s/violin/{name}_{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR),
             dataset = config["main_dataset"], name = get_region_names(COORDS), datatype = config["data_type"], file_type = config["plot_file_type"]),
-            expand("%s/{plottype}_{datatype}.pdf" % PLOT_DIR, plottype=["violin", "scatter"], datatype = config["data_type"])
+            expand("%s/{plottype}_{datatype}.pdf" % PLOT_DIR, plottype=["violin", "scatter", "superpop"], datatype = config["data_type"])
     params: sge_opts=""
 
 rule get_cn_wssd_variance:
@@ -158,16 +158,16 @@ rule get_combined_pdfs:
     params: ""
 
 rule combine_violin_pdfs:
-    input: expand("%s/{plottype}/{name}_{dataset}_{plottype}_{datatype}.pdf" % (PLOT_DIR), plottype = ["violin", "scatter"], name = get_region_names(COORDS), dataset = config["main_dataset"], datatype = config["data_type"])
-    output: "%s/violin_{datatype}.pdf" % PLOT_DIR, "%s/scatter_{datatype}.pdf" % PLOT_DIR
+    input: expand("%s/{plottype}/{name}_{dataset}_{plottype}_{datatype}.pdf" % (PLOT_DIR), plottype = ["violin", "scatter", "superpop"], name = get_region_names(COORDS), dataset = config["main_dataset"], datatype = config["data_type"])
+    output: "%s/violin_{datatype}.pdf" % PLOT_DIR, "%s/scatter_{datatype}.pdf" % PLOT_DIR, "%s/superpop_{datatype}.pdf" % PLOT_DIR
     params: sge_opts = "-l mfree=8G -N pdf_combine"
     run:
-        for pt in ["violin", "scatter"]:
+        for pt in ["violin", "scatter", "superpop"]:
             shell("""gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile={PLOT_DIR}/{pt}_{wildcards.datatype}.pdf plots/{pt}/*{pt}_{wildcards.datatype}.pdf""")
 
 rule plot_violins:
     input: expand("%s/{fam}_{{dataset}}_{{datatype}}.genotypes.df" % (TABLE_DIR), fam = config["gene_families"])
-    output: "%s/violin/{name}_{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR), "%s/scatter/{name}_{dataset}_scatter_{datatype}.{file_type}" % (PLOT_DIR)
+    output: "%s/violin/{name}_{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR), "%s/scatter/{name}_{dataset}_scatter_{datatype}.{file_type}" % (PLOT_DIR), "%s/superpop/{name}_{dataset}_superpop_{datatype}.{file_type}" % (PLOT_DIR)
     params: sge_opts = "-l mfree=8G -N plot_violins"
     run:
         family = get_family_from_name(wildcards.name, COORDS)
@@ -175,6 +175,7 @@ rule plot_violins:
         title = "_".join([wildcards.name, coords, size, config["build"], wildcards.dataset, wildcards.datatype])
         shell("""Rscript {SCRIPT_DIR}/plotting/genotype_violin.R {TABLE_DIR}/{family}_{wildcards.dataset}_{wildcards.datatype}.genotypes.df {output[0]} {wildcards.name} {wildcards.file_type} {title} 3 violin; touch {output[0]}""")
         shell("""Rscript {SCRIPT_DIR}/plotting/genotype_violin.R {TABLE_DIR}/{family}_{wildcards.dataset}_{wildcards.datatype}.genotypes.df {output[1]} {wildcards.name} {wildcards.file_type} {title} 3; touch {output[1]}""")
+        shell("""Rscript {SCRIPT_DIR}/plotting/genotype_violin.R {TABLE_DIR}/{family}_{wildcards.dataset}_{wildcards.datatype}.genotypes.df {output[2]} {wildcards.name} {wildcards.file_type} {title} 3 super_pop_only; touch {output[2]}""")
 
 rule get_long_table:
     input: regions = "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
