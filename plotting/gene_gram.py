@@ -6,7 +6,7 @@ from pandas import DataFrame
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from scipy.cluster.hierarchy import linkage, dendrogram
+import scipy.cluster.hierarchy as sch
 from scipy.spatial.distance import pdist
 
 def get_nplots(nsamples, spp):
@@ -17,19 +17,23 @@ def get_nplots(nsamples, spp):
         nplots += 1
     return nplots
 
-def get_linkage(cns):
-    df_dist = pdist(cns, "seuclidean")
-    df_link = linkage(df_dist, method='average')
+def get_linkage(cns, fclust_threshold = None):
+    df_dist = pdist(cns, "euclidean")
+    df_link = sch.linkage(df_dist, method='average')
+    if fclust_threshold is not None:
+        cns_fclust = sch.fcluster(df_link, fclust_threshold, "distance") # df_dist.max()
+    else:
+        cns_fclust = None
 #    df_dendro = dendrogram(df_link, labels = cns.index)
-    return df_link
+    return df_link, cns_fclust
 
 def reorder_df_samples(df, cns, df_link):
-    df_leaves = dendrogram(df_link, labels = cns.index, no_plot=True, distance_sort="descending")['leaves']
+    df_leaves = sch.dendrogram(df_link, labels = cns.index, no_plot=True, distance_sort="descending")['leaves']
     sample_order = [cns.index[i] for i in df_leaves]
     df_new = df[["chr", "start", "end", "name"] + sample_order]
     return df_new
 
-def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_column, label_heatmap, df_link, first_index = "pop", second_index = "super_pop", sample_names = True, sample_range = [0, 0],  xspace = 0.05, yspace = 0.07, xmin = 0.04, include_coords = False):
+def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_column, label_heatmap, df_link, first_index = "pop", second_index = "super_pop", sample_names = True, sample_range = [0, 0],  xspace = 0.05, yspace = 0.07, xmin = 0.04, include_coords = False, fclust_threshold = None):
     """
     Plot the given DataFrame as a heatmap.
     """
@@ -117,7 +121,7 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_c
         df_dist = pdist(cns)
         Y = linkage(df_dist, method='average')
         region_dendro = fig.add_axes([0.05,0.1,0.2,0.6])
-        Z1 = dendrogram(Y, orientation='right',labels=cns.index) # adding/removing the axes
+        Z1 = sch.dendrogram(Y, orientation='right',labels=cns.index) # adding/removing the axes
         ax1.set_yticks([])
         ax1.set_xticks([])
     ###
@@ -126,7 +130,7 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_c
     # Compute and plot sample dendrogram.
     if hclust:
         sample_dendro = fig.add_axes(sample_dendro_dims)
-        Z2 = dendrogram(df_link, labels=df.columns[4:], distance_sort="descending")
+        Z2 = sch.dendrogram(df_link, labels=df.columns[4:], distance_sort="descending")
         sample_dendro.set_yticks([])
         if not label_heatmap:
             sample_dendro.set_xticklabels(col_labels, rotation=90, fontsize=4)
@@ -140,6 +144,12 @@ def plot_heatmap(df, pop_info, output_filename, color_column, hclust, annotate_c
             xmax = xlocs[sample_range[1] - 1]
             ymax = sample_dendro.get_ylim()[1]
             sample_dendro.add_patch(mpl.patches.Rectangle((xmin, 0), xmax - xmin, ymax, facecolor="grey", edgecolor="none"))
+
+        if fclust_threshold is not None:
+            min_x, max_x = sample_dendro.get_xlim()
+            ymax = sample_dendro.get_ylim()[1]
+            max_y = max(map(lambda x: x[1], Z2['dcoord']))
+            plt.axhline(y = fclust_threshold, xmin = min_x, xmax = max_x, color="k")
 
     #Compute and plot the heatmap
     axmatrix = fig.add_axes(heatmap_dims)
@@ -180,6 +190,7 @@ if __name__ == "__main__":
     parser.add_argument("--spp", default=None, type=int, help="Number of samples per plot (Default: all)")
     parser.add_argument("--color_column", default=None, help="Label every sample and color by specified column from pop file (e.g. super_pop)")
     parser.add_argument("--hclust", action="store_true", help="Group samples using hierarchical clustering")
+    parser.add_argument("--fclust_threshold", type=float, default=None, help="Threshold for dividing samples into flat clusters (Default: %(default)s)")
     parser.add_argument("--exclude_sample_names", action="store_true", help="Use '-' instead of sample name")
     parser.add_argument("--annotate_column", default=None, help="Name of column to append to sample names")
     parser.add_argument("--label_heatmap", action="store_true", help="Label heatmap instead of dendrogram")
@@ -217,7 +228,10 @@ if __name__ == "__main__":
 
     if args.hclust:
         cns = df[df.columns[4:]].T
-        df_link = get_linkage(cns)
+        df_link, cns_fclust = get_linkage(cns, fclust_threshold = args.fclust_threshold)
+        cns_fclust = pd.DataFrame(data={"sample": cns.index, "cluster": cns_fclust})
+        cns_fclust.sort(inplace=True, columns="cluster")
+        cns_fclust.to_csv(args.output_file_prefix + ".tab", index=False, sep="\t")
         df = reorder_df_samples(df, cns, df_link)
     else:
         df_link = None
@@ -226,5 +240,5 @@ if __name__ == "__main__":
         start_sample = i * spp
         end_sample = min(i * spp + spp, nsamples)
         plot_name = ".".join([args.output_file_prefix, str(i), args.plot_type])
-        plot_heatmap(df, pop_info, plot_name, args.color_column, args.hclust, args.annotate_column, args.label_heatmap, df_link, sample_names = sample_names, sample_range = [start_sample, end_sample], xspace = args.xspace, yspace = args.yspace, xmin = args.xmin, include_coords = args.include_coords)
+        plot_heatmap(df, pop_info, plot_name, args.color_column, args.hclust, args.annotate_column, args.label_heatmap, df_link, sample_names = sample_names, sample_range = [start_sample, end_sample], xspace = args.xspace, yspace = args.yspace, xmin = args.xmin, include_coords = args.include_coords, fclust_threshold = args.fclust_threshold)
 
