@@ -1,0 +1,2 @@
+export PYTHONPATH=$PYTHONPATH:/net/gs/vol2/home/psudmant/EEE_Lab/1000G/1000genomesScripts
+export PYTHONPATH=$PYTHONPATH:/net/gs/vol2/home/psudmant/EEE_Lab/projects/common_code
