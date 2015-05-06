@@ -10,13 +10,14 @@ DATASETS = config["datasets"]
 CWD = os.getcwd()
 
 ds_manifest = pd.read_table(config["dataset_config"], header=0)
+ds_manifest.index = ds_manifest.dataset
 
 def get_input_files_from_ds_name(wildcards):
-    dataset, split_dir, index, sex_info, manifest, name_mapping = ds_manifest.loc[ds_manifest.dataset == wildcards.ds].values.flatten().tolist()
+    dataset, split_dir, index, sex_info, manifest, name_mapping = ds_manifest.loc[wildcards.ds].tolist()
     return [split_dir, index, sex_info, split_dir + "/" + wildcards.sample]
 
 def get_samples_from_ds(wildcards):
-    data_path = ds_manifest.ix[ds_manifest.dataset == wildcards.ds, "genome_index"].values[0]
+    data_path = ds_manifest.loc[wildcards.ds]["genome_index"]
     data = pd.read_table(data_path, header=None)
     data.columns = ["sample", "mapping", "mrsfast", "bam", "primary_analysis"]
     return ["%s/%s/%s_%s" % (wildcards.ds, REGION_NAME, wildcards.dt, sn) for sn in data.sample.unique().tolist()]
@@ -31,12 +32,12 @@ rule convert_genotypes:
     output: "{ds}/%s_{ds}_{dt}_genotypes.tab" % REGION_NAME
     params: sge_opts = "-N convert_gts"
     run:
-        pop_file = pd.read_csv(ds_manifest.ix[ds_manifest.dataset == wildcards.ds, "manifest"].values[0], header=0, sep=r"\s*", index_col=False)
+        pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep=r"\s*", index_col=False)
         regions = pd.read_csv(input.regions, header = None, sep = r"\s*", index_col=False)
         regions.columns = ["chr", "start", "end", "name"]
         cns = pd.read_csv(input.cps_file, header = 0, sep = r"\s*", index_col=False)
         new_cns_cols = cns.columns.tolist()
-        name_mapping_file = ds_manifest.ix[ds_manifest.dataset == wildcards.ds, "name_mapping"].values[0]
+        name_mapping_file = ds_manifest.loc[wildcards.ds]["name_mapping"]
         if name_mapping_file not in ["None", "NA", "none"]:
             name_mapping = pd.read_csv(name_mapping_file, sep=r"\s*", header=None, index_col=0)
             for i, col in enumerate(new_cns_cols):
@@ -56,8 +57,8 @@ rule make_cn_table:
     params: sge_opts="-N cn_table", out_dir = "{ds}", out_file = "%s_{ds}_{dt}.tab" % REGION_NAME
     log: "log/{ds}/{dt}_ml_summary.txt"
     run:
-        sex_info = ds_manifest.ix[ds_manifest.dataset == wildcards.ds, "sex_info"].values[0]
-        genome_index = ds_manifest.ix[ds_manifest.dataset == wildcards.ds, "genome_index"].values[0]
+        sex_info = ds_manifest.loc[wildcards.ds]["sex_info"]
+        genome_index = ds_manifest.loc[wildcards.ds]["genome_index"]
         input_dir = os.path.dirname(input[0])
         shell("python make_ml_output_summary.py --input_dir {input_dir} --input_file_name {wildcards.dt} --input_regions {REGIONS} --sex_pop_index {sex_info} --input_genomes {genome_index} --outdir {params.out_dir} --out_file {params.out_file} --regress")
 
