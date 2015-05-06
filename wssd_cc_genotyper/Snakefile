@@ -7,6 +7,7 @@ SCRIPT_DIR = config["script_dir"]
 REGIONS = config["regions_bed_file"]
 REGION_NAME = config["region_name"]
 DATASETS = config["datasets"]
+REFERENCE = config["reference"]
 CWD = os.getcwd()
 
 ds_manifest = pd.read_table(config["dataset_config"], header=0)
@@ -68,7 +69,11 @@ rule do_ml_analysis:
     params: sge_opts="-N ml_analysis", sample = "{sample}", dt = "{dt}"
     log: "log/{ds}/{sample}_{dt}_ml_analysis.txt"
     run:
+        contigs_file = config["ref_files"][REFERENCE]["contigs"]
         if params.dt == "wssd":
-            shell("source modules.txt; python ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {REGIONS} --contigs ~psudmant/genomes/contigs/hg19_contigs.txt --mask_file ~psudmant/genomes/mask_tracks/HG19-noWM-pad36 --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file  _filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim0-ed-all.per_bac_params --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {CWD}/{wildcards.ds}/{REGION_NAME} --omit_sample_name")
+            mask_file = config["ref_files"][REFERENCE]["wssd_mask"]
+            additional_args = ""
         else:
-            shell("source modules.txt; python ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {REGIONS} --contigs ~psudmant/genomes/contigs/hg19_contigs.txt --mask_file ~psudmant/genomes/sunk_tracks/hg19/hg19_sunk_depth_mask.dts --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file _filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim1-ed-0.per_1kb_params --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {CWD}/{wildcards.ds}/{REGION_NAME} --sunk_based --omit_sample_name")
+            mask_file = config["ref_files"][REFERENCE]["sunk_mask"]
+            additional_args = "--sunk_based"
+        shell("source modules.txt; python ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {REGIONS} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file _filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim1-ed-0.per_1kb_params --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {CWD}/{wildcards.ds}/{REGION_NAME} --omit_sample_name {additional_args}")
