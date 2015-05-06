@@ -5,7 +5,7 @@
 	"append_dataset": ["archaics", "nhp"],
     "master_manifest": "/net/eichler/vol2/eee_shared/whole_genome_resources/all_diversity.manifest.filtered.tab",
     "gene_families":    [
-							"POM121"
+							"extended_regions"
                         ],
 	"build": "GRCh37",
 	"pop_codes": "plotting/super_pop_codes.tab",

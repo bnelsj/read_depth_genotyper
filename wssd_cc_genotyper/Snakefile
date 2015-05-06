@@ -6,11 +6,11 @@ configfile: "config.json"
 SCRIPT_DIR = config["script_dir"]
 REGIONS = config["regions_bed_file"]
 REGION_NAME = config["region_name"]
-DATASETS = config["datasets"]
 REFERENCE = config["reference"]
+DATASETS = config["datasets"]
 CWD = os.getcwd()
 
-ds_manifest = pd.read_table(config["dataset_config"], header=0)
+ds_manifest = pd.read_table(config["ref_files"][REFERENCE]["datasets"], header=0)
 ds_manifest.index = ds_manifest.dataset
 
 def get_input_files_from_ds_name(wildcards):
@@ -35,7 +35,7 @@ rule convert_genotypes:
     run:
         pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep=r"\s*", index_col=False)
         regions = pd.read_csv(input.regions, header = None, sep = r"\s*", index_col=False)
-        regions.columns = ["chr", "start", "end", "name"]
+        regions.columns = ["chr", "start", "end", "name", "score", "strand", "thickStart", "thickEnd", "itemRgb" "blockCount", "blockSizes", "blockStarts"][0:len(regions.columns)]
         cns = pd.read_csv(input.cps_file, header = 0, sep = r"\s*", index_col=False)
         new_cns_cols = cns.columns.tolist()
         name_mapping_file = ds_manifest.loc[wildcards.ds]["name_mapping"]
@@ -72,8 +72,10 @@ rule do_ml_analysis:
         contigs_file = config["ref_files"][REFERENCE]["contigs"]
         if params.dt == "wssd":
             mask_file = config["ref_files"][REFERENCE]["wssd_mask"]
+            param_file = "_filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim0-ed-all.per_bac_params"
             additional_args = ""
         else:
             mask_file = config["ref_files"][REFERENCE]["sunk_mask"]
+            param_file = "_filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim1-ed-0.per_1kb_params"
             additional_args = "--sunk_based"
-        shell("source modules.txt; python ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {REGIONS} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file _filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim1-ed-0.per_1kb_params --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {CWD}/{wildcards.ds}/{REGION_NAME} --omit_sample_name {additional_args}")
+        shell("source modules.txt; python ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {REGIONS} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file {param_file} --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {CWD}/{wildcards.ds}/{REGION_NAME} --omit_sample_name {additional_args}")
