@@ -1,0 +1,7 @@
+{
+	"datasets": ["archaics"],
+	"script_dir": "/net/eichler/vol7/home/psudmant/EEE_Lab/1000G/1000genomesScripts/analysis_scripts/ml_region_analysis",
+	"regions_bed_file": "extended_regions.coords.bed",
+	"region_name": "regions",
+	"dataset_config": "datasets.tab"
+}

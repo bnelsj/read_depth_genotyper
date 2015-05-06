@@ -1,0 +1,74 @@
+import pandas as pd
+import os
+
+configfile: "config.json"
+
+SCRIPT_DIR = config["script_dir"]
+REGIONS = config["regions_bed_file"]
+REGION_NAME = config["region_name"]
+DATASETS = config["datasets"]
+CWD = os.getcwd()
+
+ds_manifest = pd.read_table(config["dataset_config"], header=0)
+ds_manifest.index = ds_manifest.dataset
+
+def get_input_files_from_ds_name(wildcards):
+    dataset, split_dir, index, sex_info, manifest, name_mapping = ds_manifest.loc[wildcards.ds].tolist()
+    return [split_dir, index, sex_info, split_dir + "/" + wildcards.sample]
+
+def get_samples_from_ds(wildcards):
+    data_path = ds_manifest.loc[wildcards.ds]["genome_index"]
+    data = pd.read_table(data_path, header=None)
+    data.columns = ["sample", "mapping", "mrsfast", "bam", "primary_analysis"]
+    return ["%s/%s/%s_%s" % (wildcards.ds, REGION_NAME, wildcards.dt, sn) for sn in data.sample.unique().tolist()]
+
+rule all:
+    input: expand("{ds}/%s_{ds}_{dt}_genotypes.tab" % REGION_NAME, ds = DATASETS, dt = ["wssd", "sunk"])
+    params: sge_opts="-N all_gts"
+
+rule convert_genotypes:
+    input:  regions = REGIONS,
+            cps_file = "{ds}/%s_{ds}_{dt}.tab" % REGION_NAME
+    output: "{ds}/%s_{ds}_{dt}_genotypes.tab" % REGION_NAME
+    params: sge_opts = "-N convert_gts"
+    run:
+        pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep=r"\s*", index_col=False)
+        regions = pd.read_csv(input.regions, header = None, sep = r"\s*", index_col=False)
+        regions.columns = ["chr", "start", "end", "name"]
+        cns = pd.read_csv(input.cps_file, header = 0, sep = r"\s*", index_col=False)
+        new_cns_cols = cns.columns.tolist()
+        name_mapping_file = ds_manifest.loc[wildcards.ds]["name_mapping"]
+        if name_mapping_file not in ["None", "NA", "none"]:
+            name_mapping = pd.read_csv(name_mapping_file, sep=r"\s*", header=None, index_col=0)
+            for i, col in enumerate(new_cns_cols):
+                if col in name_mapping.index:
+                    new_cns_cols[i] = name_mapping.loc[col].tolist()[0]
+
+        cns.columns = new_cns_cols
+        include_samples = [sn for sn in new_cns_cols if sn in pop_file["sample"].tolist()]
+        
+        cns = cns[["chr", "start", "end"] + include_samples]
+        data = regions.merge(cns, on=["chr", "start", "end"])
+        data.to_csv(output[0], index=False, sep="\t", na_rep = "NA")
+
+rule make_cn_table:
+    input: get_samples_from_ds
+    output: "{ds}/%s_{ds}_{dt}.tab" % REGION_NAME
+    params: sge_opts="-N cn_table", out_dir = "{ds}", out_file = "%s_{ds}_{dt}.tab" % REGION_NAME
+    log: "log/{ds}/{dt}_ml_summary.txt"
+    run:
+        sex_info = ds_manifest.loc[wildcards.ds]["sex_info"]
+        genome_index = ds_manifest.loc[wildcards.ds]["genome_index"]
+        input_dir = os.path.dirname(input[0])
+        shell("python make_ml_output_summary.py --input_dir {input_dir} --input_file_name {wildcards.dt} --input_regions {REGIONS} --sex_pop_index {sex_info} --input_genomes {genome_index} --outdir {params.out_dir} --out_file {params.out_file} --regress")
+
+rule do_ml_analysis:
+    input: get_input_files_from_ds_name
+    output: "{ds}/%s/{dt,wssd|sunk}_{sample}" % REGION_NAME
+    params: sge_opts="-N ml_analysis", sample = "{sample}", dt = "{dt}"
+    log: "log/{ds}/{sample}_{dt}_ml_analysis.txt"
+    run:
+        if params.dt == "wssd":
+            shell("source modules.txt; python ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {REGIONS} --contigs ~psudmant/genomes/contigs/hg19_contigs.txt --mask_file ~psudmant/genomes/mask_tracks/HG19-noWM-pad36 --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file  _filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim0-ed-all.per_bac_params --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {CWD}/{wildcards.ds}/{REGION_NAME} --omit_sample_name")
+        else:
+            shell("source modules.txt; python ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {REGIONS} --contigs ~psudmant/genomes/contigs/hg19_contigs.txt --mask_file ~psudmant/genomes/sunk_tracks/hg19/hg19_sunk_depth_mask.dts --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file _filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim1-ed-0.per_1kb_params --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {CWD}/{wildcards.ds}/{REGION_NAME} --sunk_based --omit_sample_name")
