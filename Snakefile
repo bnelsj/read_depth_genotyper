@@ -184,7 +184,7 @@ rule get_long_table:
     run:
         pop_file = config["master_manifest"]
         pop_codes = config["pop_codes"]
-        shell("""Rscript {SCRIPT_DIR}/genotyper/transform_genotypes.R {input.regions} {pop_file} {pop_codes} {wildcards.dataset} {output}""")
+        shell("""Rscript {SCRIPT_DIR}/gglob_genotyper/transform_genotypes.R {input.regions} {pop_file} {pop_codes} {wildcards.dataset} {output}""")
 
 rule combine_genotypes:
     input: expand("{{fam}}/{{fam}}_{ds}_{{datatype}}_genotypes.tab", ds = config["dataset"])
