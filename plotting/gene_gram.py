@@ -27,6 +27,7 @@ def get_cns_fclust(df_link, fclust_threshold):
 def reorder_df_samples(df, cns, df_link):
     df_leaves = sch.dendrogram(df_link, labels = cns.index, no_plot=True, distance_sort="descending")['leaves']
     sample_order = [cns.index[i] for i in df_leaves]
+    print df.columns
     df_new = df[["chr", "start", "end", "name"] + sample_order]
     return df_new
 
@@ -215,7 +216,6 @@ if __name__ == "__main__":
     df["name"] = df.name.map(lambda x: "_".join(sorted(x.split(","))))
     df.sort(columns=["name"], inplace=True, axis=0)
     df.index = df.name
-    df = df[sample_order].applymap(lambda x: 10 if x > 10 else x)
 
     sample_names = not args.exclude_sample_names
 
@@ -224,16 +224,16 @@ if __name__ == "__main__":
     nplots = get_nplots(nsamples, spp)
 
     if args.hclust:
-        cns = df[df.columns[4:]].T
+        cns = df[sample_order].T
         df_link = get_linkage(cns)        
         df = reorder_df_samples(df, cns, df_link)
+    else:
+        df_link = None
     if args.fclust_threshold is not None:
         cns_fclust = get_cns_fclust(df_link, args.fclust_threshold)
         cns_fclust = pd.DataFrame(data={"sample": cns.index, "cluster": cns_fclust})
         cns_fclust.sort(inplace=True, columns="cluster")
         cns_fclust.to_csv(args.output_file_prefix + ".tab", index=False, sep="\t")
-    else:
-        df_link = None
 
     for i in range(nplots):
         start_sample = i * spp
