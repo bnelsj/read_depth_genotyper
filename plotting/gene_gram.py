@@ -2,7 +2,6 @@ import argparse
 import csv
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -17,15 +16,13 @@ def get_nplots(nsamples, spp):
         nplots += 1
     return nplots
 
-def get_linkage(cns, fclust_threshold = None):
+def get_linkage(cns):
     df_dist = pdist(cns, "euclidean")
     df_link = sch.linkage(df_dist, method='average')
-    if fclust_threshold is not None:
-        cns_fclust = sch.fcluster(df_link, fclust_threshold, "distance") # df_dist.max()
-    else:
-        cns_fclust = None
-#    df_dendro = dendrogram(df_link, labels = cns.index)
-    return df_link, cns_fclust
+    return df_link
+
+def get_cns_fclust(df_link, fclust_threshold):
+    return sch.fcluster(df_link, fclust_threshold, "distance")
 
 def reorder_df_samples(df, cns, df_link):
     df_leaves = sch.dendrogram(df_link, labels = cns.index, no_plot=True, distance_sort="descending")['leaves']
@@ -200,8 +197,8 @@ if __name__ == "__main__":
     parser.add_argument("--include_coords", action="store_true", help="Annotate regions with genomic coordinates")
     args = parser.parse_args()
 
-    df = pd.read_table(args.input_file, na_values="NA")
-    pop_info = pd.read_csv(args.pop_file, sep='\t')
+    df = pd.read_table(args.input_file, na_values="NA").dropna()
+    pop_info = pd.read_table(args.pop_file)
     pop_info.sort(columns=["super_pop", "pop"], inplace=True, axis=0)
 
     sample_order = [sample for sample in pop_info.sample if sample in df.columns]
@@ -218,7 +215,7 @@ if __name__ == "__main__":
     df["name"] = df.name.map(lambda x: "_".join(sorted(x.split(","))))
     df.sort(columns=["name"], inplace=True, axis=0)
     df.index = df.name
-    df[sample_order].applymap(lambda x: 10 if x > 10 else x)
+    df = df[sample_order].applymap(lambda x: 10 if x > 10 else x)
 
     sample_names = not args.exclude_sample_names
 
@@ -228,7 +225,8 @@ if __name__ == "__main__":
 
     if args.hclust:
         cns = df[df.columns[4:]].T
-        df_link, cns_fclust = get_linkage(cns, fclust_threshold = args.fclust_threshold)
+        df_link = get_linkage(cns)
+        cns_fclust = get_cns_fclust(df_link, args.fclust_threshold)
         cns_fclust = pd.DataFrame(data={"sample": cns.index, "cluster": cns_fclust})
         cns_fclust.sort(inplace=True, columns="cluster")
         cns_fclust.to_csv(args.output_file_prefix + ".tab", index=False, sep="\t")

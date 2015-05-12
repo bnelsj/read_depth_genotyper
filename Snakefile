@@ -187,42 +187,16 @@ rule get_long_table:
         shell("""Rscript {SCRIPT_DIR}/genotyper/transform_genotypes.R {input.regions} {pop_file} {pop_codes} {wildcards.dataset} {output}""")
 
 rule combine_genotypes:
-    input: expand("{{fam}}/{ds}/{ds}_{{datatype}}_genotypes.tab", ds = config["dataset"])
+    input: expand("{{fam}}/{{fam}}_{ds}_{{datatype}}_genotypes.tab", ds = config["dataset"])
     output: "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
     params: sge_opts="-l mfree=2G -N combine_gt"
     run:
         fam = wildcards.fam
         dt = wildcards.datatype
         ds = wildcards.dataset
-        main_ds = pd.read_csv("{fam}/{ds}/{ds}_{dt}_genotypes.tab".format(fam=fam, ds=ds, dt=dt), header=0, sep="\t", index_col=False, na_values="NA")
+        main_ds = pd.read_table(input[0], na_values="NA")
         for app_ds in config["append_dataset"]:
             if app_ds != ds:
                 append_dataset = pd.read_csv("{fam}/{app_ds}/{app_ds}_{dt}_genotypes.tab".format(fam=fam, app_ds=app_ds, dt=dt), header=0, sep="\t", index_col=False)
                 main_ds = main_ds.merge(append_dataset, on=["chr", "start", "end", "name"])
         main_ds.to_csv("{fam}/{fam}.{ds}.combined.{dt}.bed".format(fam=fam, ds=ds, dt=dt), index=False, sep="\t", na_rep="NA")
-
-rule convert_genotypes:
-    input:  coords = "{fam}/{fam}.coords.bed",
-            sunk = "{fam}/{ds}/{fam}_sunk_{fam}.REGRESS.summary",
-            wssd = "{fam}/{ds}/{fam}_{fam}.REGRESS.summary"
-    output: "{fam}/{ds}/{ds}_sunk_genotypes.tab", "{fam}/{ds}/{ds}_wssd_genotypes.tab"
-    params: sge_opts = "-N convert_gts"
-    run:
-        pop_file = pd.read_csv(config[wildcards.ds]["pop_file"], header=0, sep=r"\s*", index_col=False)
-        regions = pd.read_csv(input.coords, header = None, sep = r"\s*", index_col=False)
-        regions.columns = ["chr", "start", "end", "name"]
-        for num, file in enumerate([input.sunk, input.wssd]):
-            cns = pd.read_csv(file, header = 0, sep = r"\s*", index_col=False)
-            new_cns_cols = cns.columns.tolist()
-            if config[wildcards.ds]["name_mapping"] != "":
-                name_mapping = pd.read_csv(config[wildcards.ds]["name_mapping"], sep=r"\s*", header=None, index_col=0)
-                for i, col in enumerate(new_cns_cols):
-                    if col in name_mapping.index:
-                        new_cns_cols[i] = name_mapping.loc[col].tolist()[0]
-
-            cns.columns = new_cns_cols
-            include_samples = [sn for sn in new_cns_cols if sn in pop_file["sample"].tolist()]
-            
-            cns = cns[["chr", "start", "end"] + include_samples]
-            data = regions.merge(cns, on=["chr", "start", "end"])
-            data.to_csv(output[num], index=False, sep="\t", na_rep = "NA")
