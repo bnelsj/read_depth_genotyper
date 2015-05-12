@@ -225,12 +225,13 @@ if __name__ == "__main__":
 
     if args.hclust:
         cns = df[df.columns[4:]].T
-        df_link = get_linkage(cns)
+        df_link = get_linkage(cns)        
+        df = reorder_df_samples(df, cns, df_link)
+    if args.fclust_threshold is not None:
         cns_fclust = get_cns_fclust(df_link, args.fclust_threshold)
         cns_fclust = pd.DataFrame(data={"sample": cns.index, "cluster": cns_fclust})
         cns_fclust.sort(inplace=True, columns="cluster")
         cns_fclust.to_csv(args.output_file_prefix + ".tab", index=False, sep="\t")
-        df = reorder_df_samples(df, cns, df_link)
     else:
         df_link = None
 
