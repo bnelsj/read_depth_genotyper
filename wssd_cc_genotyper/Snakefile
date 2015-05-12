@@ -24,13 +24,13 @@ def get_samples_from_ds(wildcards):
     return ["%s/%s/%s_%s" % (wildcards.ds, REGION_NAME, wildcards.dt, sn) for sn in data.sample.unique().tolist()]
 
 rule all:
-    input: expand("{ds}/%s_{ds}_{dt}_genotypes.tab" % REGION_NAME, ds = DATASETS, dt = ["wssd", "sunk"])
+    input: expand("%s/%s_{ds}_{dt}_genotypes.tab" % (REGION_NAME, REGION_NAME), ds = DATASETS, dt = ["wssd", "sunk"])
     params: sge_opts="-N all_gts"
 
 rule convert_genotypes:
     input:  regions = REGIONS,
-            cps_file = "{ds}/%s_{ds}_{dt}.tab" % REGION_NAME
-    output: "{ds}/%s_{ds}_{dt}_genotypes.tab" % REGION_NAME
+            cps_file = "%s/%s_{ds}_{dt}.tab" % (REGION_NAME, REGION_NAME)
+    output: "%s/%s_{ds}_{dt}_genotypes.tab" % (REGION_NAME, REGION_NAME)
     params: sge_opts = "-N convert_gts"
     run:
         pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep=r"\s*", index_col=False)
@@ -54,8 +54,8 @@ rule convert_genotypes:
 
 rule make_cn_table:
     input: get_samples_from_ds
-    output: "{ds}/%s_{ds}_{dt}.tab" % REGION_NAME
-    params: sge_opts="-N cn_table", out_dir = "{ds}", out_file = "%s_{ds}_{dt}.tab" % REGION_NAME
+    output: "%s/%s_{ds}_{dt}.tab" % (REGION_NAME, REGION_NAME)
+    params: sge_opts="-N cn_table", out_dir = REGION_NAME, out_file = "%s_{ds}_{dt}.tab" % REGION_NAME
     log: "log/{ds}/{dt}_ml_summary.txt"
     run:
         sex_info = ds_manifest.loc[wildcards.ds]["sex_info"]
@@ -78,4 +78,4 @@ rule do_ml_analysis:
             mask_file = config["ref_files"][REFERENCE]["sunk_mask"]
             param_file = "_filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim1-ed-0.per_1kb_params"
             additional_args = "--sunk_based"
-        shell("source modules.txt; python ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {REGIONS} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file {param_file} --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {CWD}/{wildcards.ds}/{REGION_NAME} --omit_sample_name {additional_args}")
+        shell("source modules.txt; python ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {REGIONS} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file {param_file} --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {wildcards.ds}/{REGION_NAME} --omit_sample_name {additional_args}")
