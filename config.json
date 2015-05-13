@@ -1,20 +1,32 @@
 {
-    "script_dir": "/net/eichler/vol5/home/bnelsj/src/read_depth_genotyper",
-    "dataset": ["1kg", "hgdp", "archaics", "nhp"],
-	"main_dataset": ["1kg", "hgdp"],
-	"append_dataset": ["archaics", "nhp"],
+	"reference": "hg19",
+	"genotyper": "gglob",
+	"genotype_methods": ["GMM", "float"],
+	"data_types": ["wssd", "sunk"],
+	"bedfiles": {"regions": "dat/regions.bed"},
+    "datasets": ["archaics"],
+	"main_dataset": ["archaics"],
+	"append_dataset": [],
     "master_manifest": "/net/eichler/vol2/eee_shared/whole_genome_resources/all_diversity.manifest.filtered.tab",
     "gene_families":    [
-							"extended_regions"
+							"regions"
                         ],
-	"build": "GRCh37",
-	"pop_codes": "plotting/super_pop_codes.tab",
-    "data_type": ["wssd", "sunk"],
+	"pop_codes": "dat/super_pop_codes.tab",
     "table_dir": "tables",
     "plot_dir": "plots",
     "plot_file_type": ["png", "pdf"],
     "gene_gram_settings": "--color_column super_pop --hclust --include_coords --label_heatmap --xmin 0.05 --yspace 0.075 --xspace 0.08",
     "spp": 500,
+	"ref_files": {
+				  "hg19": {	"contigs": "~psudmant/genomes/contigs/hg19_contigs.txt", 
+							"wssd_mask": "~psudmant/genomes/mask_tracks/HG19-noWM-pad36", 
+							"sunk_mask": "~psudmant/genomes/sunk_tracks/hg19/hg19_sunk_depth_mask.dts",
+							"datasets": "dat/hg19_datasets.tab"},
+				  "hg38": {	"contigs": "/net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_contigs.tab",
+							"wssd_mask": "/net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_noWM_pad36",
+							"sunk_mask": "/net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_sunk_mask_track_pad36_e0.dts",
+							"datasets": "dat/hg38_datasets.tab"}
+				  },
     "hgdp":     { 
                     "pop_file": "/net/eichler/vol2/eee_shared/whole_genome_resources/hgdp/hgdp.manifest.filtered.tab",
                     "name_mapping": "/net/eichler/vol2/eee_shared/whole_genome_resources/hgdp/name_mapping"

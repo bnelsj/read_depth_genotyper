@@ -1,32 +1,35 @@
 import os
 import time
-
-configfile: "../config.json"
+import pandas as pd
 
 TOTAL_SUBSETS = 1
-SCRIPT_DIR = "~bnelsj/src/read_depth_genotyper/gglob_genotyper"
 CHR_OUTPUT_DIR = "genotypes/chr"
 FINAL_OUTPUT_DIR = "genotypes_all"
 GGLOB_DIR = "/net/eichler/vol19/projects/human_population_sequencing/nobackups/psudmant/wnd_output_DTS/hg19/C_team/gglob_renamed_no_arch"
-REGIONS = "/net/eichler/vol5/home/bnelsj/projects/hsdg/5q11/read_depth_genotyper/5q11/5q11.coords.bed"
-DATASET = "hgdp"
+REGIONS = config.get("regions")
+COORDS = list(config.get("bedfiles").values())
 
+DATASET = "hgdp"
+REGION_SETS = config["gene_families"]
+GENOTYPE_METHODS = config["genotype_methods"]
+DATATYPES = config["data_types"]
 MAX_CP = 50
 
 CONTIGS = []
-with open(REGIONS, 'r') as regions_file:
-    for line in regions_file:
-        dat = line.rstrip().split()
-        chr = dat[0]
-        if chr not in CONTIGS:
-            CONTIGS.append(chr)
+for rs in COORDS:
+    with open(rs, 'r') as regions_file:
+        for line in regions_file:
+            dat = line.rstrip().split()
+            chr = dat[0]
+            if chr not in CONTIGS:
+                CONTIGS.append(chr)
 
-POP_FILE = "/net/eichler/vol2/eee_shared/1000_genomes/release/20130502/integrated_call_samples_v3.20130502.ALL.panel"
+REFERENCE = config["reference"]
 
-DATA_TYPES = ["wssd", "sunk"]
-GENOTYPE_METHODS = ["raw", "GMM"]
+ds_manifest = pd.read_table(config["ref_files"][REFERENCE]["datasets"], header=0)
+ds_manifest.index = ds_manifest.dataset
 
-INIT_MODULES = "source %s/modules.txt" % SCRIPT_DIR
+INIT_MODULES = "source dat/modules.txt"
 
 DIRS_TO_MAKE = ["log", CHR_OUTPUT_DIR, FINAL_OUTPUT_DIR]
 
@@ -34,26 +37,25 @@ for path in DIRS_TO_MAKE:
     if not os.path.exists(path):
         os.makedirs(path)
 
-rule all:
-    input: expand("%s/long/all.{method}.{type}.long" % FINAL_OUTPUT_DIR, method = GENOTYPE_METHODS, type = DATA_TYPES)
-    params: sge_opts = ""
+def get_pop_file(wildcards):
+    return config[wildcards.dataset]["pop_file"]
 
-rule prep_for_plotting:
-    input: expand("%s/long/all.{method}.{type}.long" % FINAL_OUTPUT_DIR, method = GENOTYPE_METHODS, type = DATA_TYPES)
-    params: sge_opts = ""
+def get_gglob_from_ds(wildcards):
+    return ds_manifest.loc[wildcards.ds]["gglob_dir"]
 
-rule get_long_table:
-    input: regions = "%s/all.{method}.{type}" % FINAL_OUTPUT_DIR
-    output: "%s/long/all.{method}.{type}.long" % FINAL_OUTPUT_DIR
-    params: sge_opts = "-l mfree=8G -N make_long_table"
-    run:
-        pop_file = config["master_manifest"]
-        pop_codes = "../plotting/super_pop_codes.tab"
-        shell("""Rscript transform_genotypes.R {input.regions} {pop_file} {pop_codes} {DATASET} {output}""")
+rule genotype:
+    input: expand("{rs}/{rs}.{ds}.{dt}.genotypes.tab", rs = REGION_SETS, ds = DATASETS, dt = DATATYPES)
+    params: sge_opts="-N all_gts"
+
+rule get_float_gts:
+    input: "{rs}/%s/all.{ds}.float.{dt}" % FINAL_OUTPUT_DIR
+    output: "{rs}/{rs}.{ds}.{dt}.genotypes.tab"
+    params: "-N cp_gts"
+    shell: "cp {input} {output}"
 
 rule combine_by_chr:
-    input: expand("%s/{chr}.{{method}}.{{type}}" % CHR_OUTPUT_DIR, chr=CONTIGS)
-    output: "%s/all.{method}.{type}" % FINAL_OUTPUT_DIR
+    input: expand("{{rs}}/%s/{{ds}}.{chr}.{{method}}.{{dt}}" % CHR_OUTPUT_DIR, chr=CONTIGS)
+    output: "{rs}/%s/all.{ds}.{method}.{dt}" % FINAL_OUTPUT_DIR
     params: sge_opts = '-l mfree=8G -N combine_all'
     run:
         with open(output[0], 'w') as outfile:
@@ -64,8 +66,11 @@ rule combine_by_chr:
         time.sleep(10)
 
 rule genotype_by_chr:
-    input: "%s/gglob.idx" % GGLOB_DIR
-    output: "%s/{chr}.{method}.{type}" % CHR_OUTPUT_DIR
-    params: sge_opts = "-l mfree=16G -N gt_{chr}_{method}_{type}", max_cp=str(MAX_CP), header_chr = CONTIGS[0]
-    shell:
-        "{INIT_MODULES}; python {SCRIPT_DIR}/combine_genotypes.py --regions {REGIONS} --contig {wildcards.chr} --output {output[0]} --gglob_dir {GGLOB_DIR} --genotype_method {wildcards.method} --data_type {wildcards.type} --max_cp {params.max_cp} --header_chr {params.header_chr}"
+    input: get_gglob_from_ds
+    output: "{rs}/%s/{ds}.{chr}.{method}.{dt}" % CHR_OUTPUT_DIR
+    params: sge_opts = "-l mfree=16G -N gt_{ds}_{chr}_{method}_{dt}", max_cp=str(MAX_CP), header_chr = CONTIGS[0]
+    run:
+        regions = config["bedfiles"][wildcards.rs]
+        manifest = ds_manifest[wildcards.ds]["manifest"]
+        shell("{INIT_MODULES}; python scripts/combine_genotypes.py --regions {regions} --contig {wildcards.chr} --output {output[0]} --gglob_dir {input[0]} --genotype_method {wildcards.method} --data_type {wildcards.dt} --max_cp {params.max_cp} --header_chr {params.header_chr} --manifest {manifest}")
+        shell("touch output")

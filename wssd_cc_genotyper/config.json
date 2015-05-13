@@ -8,10 +8,10 @@
 				  "hg19": {	"contigs": "~psudmant/genomes/contigs/hg19_contigs.txt", 
 							"wssd_mask": "~psudmant/genomes/mask_tracks/HG19-noWM-pad36", 
 							"sunk_mask": "~psudmant/genomes/sunk_tracks/hg19/hg19_sunk_depth_mask.dts",
-							"datasets": "hg19_datasets.tab"},
+							"datasets": "info/hg19_datasets.tab"},
 				  "hg38": {	"contigs": "/net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_contigs.tab",
 							"wssd_mask": "/net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_noWM_pad36",
 							"sunk_mask": "/net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_sunk_mask_track_pad36_e0.dts",
-							"datasets": "hg38_datasets.tab"}
+							"datasets": "info/hg38_datasets.tab"}
 				  }
 }

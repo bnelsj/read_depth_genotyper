@@ -132,12 +132,13 @@ if __name__=="__main__":
     parser.add_argument("--header_chr", help="Name of chr to print header for")
 
     parser.add_argument("--data_type", choices=["wssd", "sunk"], help="Type of data to genotype (wssd or sunk)")
-    parser.add_argument("--genotype_method", choices=["raw", "GMM"], help="Output raw (float) or integer (Gaussian Mixture Model) genotypes (choices: raw, GMM)")
+    parser.add_argument("--genotype_method", choices=["float", "GMM"], help="Output float or integer (Gaussian Mixture Model) genotypes")
 
     parser.add_argument("--subset", default=0)
     parser.add_argument("--total_subsets", default=1)
 
     parser.add_argument("--subset_indivs", nargs="+", help="Subset of individuals to genotype")
+    parser.add_argumnet("--manifest", help="Path to manifest file with sample column")
 
     args = parser.parse_args()
 
@@ -150,10 +151,12 @@ if __name__=="__main__":
     tbx_dups = pysam.Tabixfile(args.fn_dup_tabix)
     GC_inf = GC_data(args.fn_GC_DTS, args.contig, args.fn_DTS_contigs)
 
-    if args.subset_indivs is None:
-        indivs = list(pd.read_json("%s/gglob.idx" % args.gglob_dir).indivs)
-    else:
+    if args.subset_indivs is not None:
         indivs = args.subset_indivs
+    elif args.manifest is not None:
+        indivs = pd.read_table(args.manifest, header=0).sample.unique().tolist()
+    else:
+        indivs = list(pd.read_json("%s/gglob.idx" % args.gglob_dir).indivs)
 
     # GENOTYPE TIME!
     
@@ -175,7 +178,7 @@ if __name__=="__main__":
         else:
             X, idx_s, idx_e = g.get_sunk_gt_matrix(contig, s, e)
 
-        if args.genotype_method == "raw":
+        if args.genotype_method == "float":
             gt_list = np.mean(X, 1).tolist()
             gt_ordered = [gt_list[g.indivs.index(indiv)] for indiv in indivs]
             gts = "\t".join(map(str, gt_ordered))
