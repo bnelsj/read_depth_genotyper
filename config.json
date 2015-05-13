@@ -8,10 +8,7 @@
 	"main_dataset": ["archaics"],
 	"append_dataset": [],
     "master_manifest": "/net/eichler/vol2/eee_shared/whole_genome_resources/all_diversity.manifest.filtered.tab",
-    "gene_families":    [
-							"regions"
-                        ],
-	"pop_codes": "dat/super_pop_codes.tab",
+    "pop_codes": "dat/super_pop_codes.tab",
     "table_dir": "tables",
     "plot_dir": "plots",
     "plot_file_type": ["png", "pdf"],

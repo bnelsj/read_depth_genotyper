@@ -5,6 +5,7 @@ import pandas as pd
 configfile: "config.json"
 
 COORDS = list(config.get("bedfiles").values())
+REGION_NAMES = list(config.get("bedfiles").keys())
 
 TABLE_DIR = config["table_dir"]
 PLOT_DIR = config["plot_dir"]
@@ -74,17 +75,17 @@ def get_n_plots(region_file, spp):
 rule all:   
     input:  "%s/num_suns.table.tab" % (TABLE_DIR),
             expand("%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR),
-            fam = config["gene_families"], dataset = DATASETS, datatype = DATATYPES, file_type = config["plot_file_type"]),
+            fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES, file_type = config["plot_file_type"]),
             expand("%s/violin/{name}_{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR),
             dataset = config["main_dataset"], name = get_region_names(COORDS), datatype = DATATYPES, file_type = config["plot_file_type"]),
             expand("%s/{plottype}_{datatype}.pdf" % PLOT_DIR, plottype=["violin", "scatter", "superpop"], datatype = DATATYPES)
     params: sge_opts=""
 
 rule get_cn_wssd_variance:
-    input:  gts = expand("{fam}/{dataset}/{dataset}.wssd.genotypes.tab", fam = config["gene_families"], dataset = DATASETS),
+    input:  gts = expand("{fam}/{dataset}/{dataset}.wssd.genotypes.tab", fam = REGION_NAMES, dataset = DATASETS),
             suns = "%s/num_suns.table.tab" % (TABLE_DIR)
     output: "%s/wssd_stats_by_family.tab" % (TABLE_DIR)
-    params: sge_opts = "-l mfree=2G -N get_var", families = config["gene_families"]
+    params: sge_opts = "-l mfree=2G -N get_var", families = REGION_NAMES
     run:
         wssd_stats = pd.DataFrame(columns=["name"])
         datasets = DATASETS
@@ -93,7 +94,7 @@ rule get_cn_wssd_variance:
             wssd_mean, wssd_std, cn_two = [], [], []
             sample_dat = pd.read_csv(ds_manifest.loc[dataset]["manifest"], sep="\t", header=0)
             samples = sample_dat["sample"].tolist()
-            for j, fam in enumerate(config["gene_families"]):
+            for j, fam in enumerate(REGION_NAMES):
                 data = pd.read_csv("%s/%s/%s_wssd_genotypes.tab" % (fam, dataset, dataset), sep="\t", header=0)
                 common_samples = [sample for sample in samples if sample in data.columns]
                 cns = data[common_samples]
@@ -110,10 +111,10 @@ rule get_cn_wssd_variance:
         wssd_stats.to_csv(output[0], index=False, sep="\t")
 
 rule get_cn_sunk_variance:
-    input:  gts = expand("{fam}/{dataset}/{dataset}.sunk.genotypes.tab", fam = config["gene_families"], dataset = DATASETS), 
+    input:  gts = expand("{fam}/{dataset}/{dataset}.sunk.genotypes.tab", fam = REGION_NAMES, dataset = DATASETS), 
             suns = "%s/num_suns.table.tab" % (TABLE_DIR)
     output: "%s/sunk_stats_by_region.tab" % TABLE_DIR
-    params: sge_opts = "-l mfree=2G -N get_var", families = config["gene_families"]
+    params: sge_opts = "-l mfree=2G -N get_var", families = REGION_NAMES
     run:
         sunk_stats = pd.DataFrame(columns = ["name"])
         names = []
@@ -143,7 +144,7 @@ rule get_suns:
     output: "%s/num_suns.table.tab" % (TABLE_DIR)
     params: sge_opts = "-l mfree=2G -N get_SUNs", suns = "/net/eichler/vol5/home/bnelsj/projects/gene_grams/hg19_suns.no_repeats_36bp_flanking.bed"
     run:
-        for i, fam in enumerate(config["gene_families"]):
+        for i, fam in enumerate(REGION_NAMES):
             if i == 0:
                 shell("""module load bedtools/2.21.0; bedtools intersect -a {fam}/{fam}.coords.bed -b {params.suns} -wao | groupBy -g 1,2,3,4 -c 6,6 -o first,count | 
                          awk 'OFS="\t" {{print $1, $2, $3, $4, $3-$2, $5 != "-1" ? $6 : 0}}' > {output[0]}""")
@@ -153,7 +154,7 @@ rule get_suns:
         shell("""sed -i '1ichr\tstart\tend\tname\tsize\tnSUNs' {output[0]}""")
 
 rule plot_gene_grams:
-    input: expand("{fam}/{fam}.{dataset}.combined.{datatype}.bed", fam = config["gene_families"], dataset = DATASETS, datatype = DATATYPES)
+    input: expand("{fam}/{fam}.{dataset}.combined.{datatype}.bed", fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
     output: "%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR)
     params: sge_opts = "-l mfree=8G -N gene_grams"
     run:
@@ -173,7 +174,7 @@ rule combine_violin_pdfs:
             shell("""gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile={PLOT_DIR}/{pt}_{wildcards.datatype}.pdf plots/{pt}/*{pt}_{wildcards.datatype}.pdf""")
 
 rule plot_violins:
-    input: expand("%s/{fam}_{{dataset}}_{{datatype}}.genotypes.df" % (TABLE_DIR), fam = config["gene_families"])
+    input: expand("%s/{fam}_{{dataset}}_{{datatype}}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES)
     output: "%s/violin/{name}_{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR), "%s/scatter/{name}_{dataset}_scatter_{datatype}.{file_type}" % (PLOT_DIR), "%s/superpop/{name}_{dataset}_superpop_{datatype}.{file_type}" % (PLOT_DIR)
     params: sge_opts = "-l mfree=8G -N plot_violins"
     run:

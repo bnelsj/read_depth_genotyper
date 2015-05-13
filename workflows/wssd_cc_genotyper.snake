@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 COORDS = list(config.get("bedfiles").values())
-REGION_SETS = config["gene_families"]
+REGION_SETS = list(config["bedfiles"].keys())
 
 REFERENCE = config["reference"]
 DATASETS = config["datasets"]
