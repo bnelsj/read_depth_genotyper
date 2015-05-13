@@ -11,7 +11,7 @@ ds_manifest = pd.read_table(config["ref_files"][REFERENCE]["datasets"], header=0
 ds_manifest.index = ds_manifest.dataset
 
 def get_input_files_from_ds_name(wildcards):
-    dataset, split_dir, index, sex_info, manifest, name_mapping = ds_manifest.loc[wildcards.ds].tolist()
+    dataset, split_dir, index, sex_info, manifest, gglob, name_mapping = ds_manifest.loc[wildcards.ds].tolist()
     return [split_dir, index, sex_info, split_dir + "/" + wildcards.sample]
 
 def get_samples_from_ds(wildcards):

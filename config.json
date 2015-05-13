@@ -1,6 +1,6 @@
 {
 	"reference": "hg19",
-	"genotyper": "gglob",
+	"genotyper": "wssd_cc",
 	"genotype_methods": ["GMM", "float"],
 	"data_types": ["wssd", "sunk"],
 	"bedfiles": {"regions": "dat/regions.bed"},
@@ -26,25 +26,5 @@
 							"wssd_mask": "/net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_noWM_pad36",
 							"sunk_mask": "/net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_sunk_mask_track_pad36_e0.dts",
 							"datasets": "dat/hg38_datasets.tab"}
-				  },
-    "hgdp":     { 
-                    "pop_file": "/net/eichler/vol2/eee_shared/whole_genome_resources/hgdp/hgdp.manifest.filtered.tab",
-                    "name_mapping": "/net/eichler/vol2/eee_shared/whole_genome_resources/hgdp/name_mapping"
-                },
-    "1kg":      {
-                    "pop_file": "/net/eichler/vol2/eee_shared/whole_genome_resources/1kg/1kg.manifest.filtered.tab",
-                    "name_mapping": ""
-                },
-    "archaics": {
-                    "pop_file": "/net/eichler/vol2/eee_shared/whole_genome_resources/archaics/archaics.manifest.filtered.tab",
-                    "name_mapping": "/net/eichler/vol2/eee_shared/whole_genome_resources/archaics/name_mapping"
-                },
-    "nhp":      {
-                    "pop_file": "/net/eichler/vol2/eee_shared/whole_genome_resources/nhp/nhp.manifest.filtered.tab",
-                    "name_mapping": ""
-                },
-	"simons":	{
-					"pop_file": "/net/eichler/vol5/home/bnelsj/projects/simons/cores_cc/simons.manifest.filtered.tab",
-					"name_mapping": ""
-				}
+				  }
 }

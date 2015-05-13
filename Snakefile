@@ -21,9 +21,9 @@ DIRS_TO_MAKE = ["log", TABLE_DIR, PLOT_DIR]
 genotyper = config.get("genotyper")
 
 if genotyper == "wssd_cc":
-    include: "wssd_cc_genotyper/Snakefile"
+    include: "workflows/wssd_cc_genotyper.snake"
 elif genotyper == "gglob":
-    include: "gglob_genotyper/Snakefile"
+    include: "workflows/gglob_genotyper.snake"
 
 for folder in DIRS_TO_MAKE:
     if not os.path.exists(folder):
@@ -31,9 +31,6 @@ for folder in DIRS_TO_MAKE:
 
 GENE_GRAM_SETTINGS = config.get("gene_gram_settings", "")
 SPP = config.get("spp", 500)
-
-def get_pop_file(wildcards):
-    return config[wildcards.datasets]["pop_file"]
 
 def get_region_names(coord_files):
     names = []
@@ -58,7 +55,7 @@ def get_family_from_name(name, coord_files):
             for line in reader:
                 test_name = line.rstrip().split()[3]
                 if test_name == name:
-                    return coord_file.replace(".coords.bed", "").split("/")[1]
+                    return coord_file.split("/")[1].split(".")[0]
 
 def get_n_samples(region_file):
     with open(region_file, 'r') as reader:
@@ -94,7 +91,7 @@ rule get_cn_wssd_variance:
         size = []
         for i, dataset in enumerate(datasets):
             wssd_mean, wssd_std, cn_two = [], [], []
-            sample_dat = pd.read_csv(config[dataset]["pop_file"], sep="\t", header=0)
+            sample_dat = pd.read_csv(ds_manifest.loc[dataset]["manifest"], sep="\t", header=0)
             samples = sample_dat["sample"].tolist()
             for j, fam in enumerate(config["gene_families"]):
                 data = pd.read_csv("%s/%s/%s_wssd_genotypes.tab" % (fam, dataset, dataset), sep="\t", header=0)
@@ -121,7 +118,7 @@ rule get_cn_sunk_variance:
         sunk_stats = pd.DataFrame(columns = ["name"])
         names = []
         for i, dataset in enumerate(DATASETS):
-            sample_dat = pd.read_csv(config[dataset]["pop_file"], sep="\t", header=0)
+            sample_dat = pd.read_table(ds_manifest.loc[dataset]["manifest"], header=0)
             samples = sample_dat["sample"].tolist()
             sunk_mean, sunk_std, cn_zero = [], [], []
             for j, fam in enumerate(params.families):
@@ -160,8 +157,8 @@ rule plot_gene_grams:
     output: "%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR)
     params: sge_opts = "-l mfree=8G -N gene_grams"
     run:
-        pop_file = config[wildcards.dataset]["pop_file"]
-        shell("""python scripts/gene_gram.py {wildcards.fam}/{wildcards.fam}.{wildcards.dataset}.combined.{wildcards.datatype}.bed {pop_file} {PLOT_DIR}/gene_grams/{wildcards.fam}_{wildcards.dataset}_{wildcards.datatype} --plot_type {wildcards.file_type} --spp {SPP} {GENE_GRAM_SETTINGS}""")
+        manifest = ds_manifest.loc[wildcards.dataset]["manifest"]
+        shell("""python scripts/gene_gram.py {wildcards.fam}/{wildcards.fam}.{wildcards.dataset}.combined.{wildcards.datatype}.bed {manifest} {PLOT_DIR}/gene_grams/{wildcards.fam}_{wildcards.dataset}_{wildcards.datatype} --plot_type {wildcards.file_type} --spp {SPP} {GENE_GRAM_SETTINGS}""")
 
 rule get_combined_pdfs:
     input: expand("%s/violin_{datatype}.pdf" % PLOT_DIR, datatype = DATATYPES)
@@ -192,9 +189,9 @@ rule get_long_table:
     output: "%s/{fam}_{dataset}_{datatype}.genotypes.df" % (TABLE_DIR)
     params: sge_opts = "-l mfree=8G -N make_long_table"
     run:
-        pop_file = config["master_manifest"]
+        master_manifest = config["master_manifest"]
         pop_codes = config["pop_codes"]
-        shell("""Rscript scripts/transform_genotypes.R {input.regions} {pop_file} {pop_codes} {wildcards.dataset} {output}""")
+        shell("""Rscript scripts/transform_genotypes.R {input.regions} {master_manifest} {pop_codes} {wildcards.dataset} {output}""")
 
 rule combine_genotypes:
     input: expand("{{fam}}/{{fam}}.{ds}.{{datatype}}.genotypes.tab", ds = DATASETS)
