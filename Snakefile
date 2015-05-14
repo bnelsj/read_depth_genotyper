@@ -205,6 +205,6 @@ rule combine_genotypes:
         main_ds = pd.read_table(input[0], na_values="NA")
         for app_ds in config["append_dataset"]:
             if app_ds != ds:
-                append_dataset = pd.read_csv("{fam}/{app_ds}/{app_ds}_{dt}_genotypes.tab".format(fam=fam, app_ds=app_ds, dt=dt), header=0, sep="\t", index_col=False)
+                append_dataset = pd.read_csv("{fam}/{fam}.{app_ds}.{dt}.genotypes.tab".format(fam=fam, app_ds=app_ds, dt=dt), header=0, sep="\t", index_col=False)
                 main_ds = main_ds.merge(append_dataset, on=["chr", "start", "end", "name"])
         main_ds.to_csv("{fam}/{fam}.{ds}.combined.{dt}.bed".format(fam=fam, ds=ds, dt=dt), index=False, sep="\t", na_rep="NA")
