@@ -26,7 +26,8 @@ for rs in COORDS:
 
 REFERENCE = config["reference"]
 
-ds_manifest = pd.read_table(config["ref_files"][REFERENCE]["datasets"], header=0)
+ds_manifest = pd.read_table(config["datasets_file"], header=0)
+ds_manifest = ds_manifest.ix[ds_manifest.reference == REFERENCE, :]
 ds_manifest.index = ds_manifest.dataset
 
 INIT_MODULES = "source dat/modules.txt"

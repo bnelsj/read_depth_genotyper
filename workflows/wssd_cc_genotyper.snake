@@ -7,12 +7,13 @@ REGION_SETS = list(config["bedfiles"].keys())
 REFERENCE = config["reference"]
 DATASETS = config["datasets"]
 
-ds_manifest = pd.read_table(config["ref_files"][REFERENCE]["datasets"], header=0)
+ds_manifest = pd.read_table(config["datasets_file"], header=0)
+ds_manifest = ds_manifest.ix[ds_manifest.reference == REFERENCE, :]
 ds_manifest.index = ds_manifest.dataset
 
 def get_input_files_from_ds_name(wildcards):
-    dataset, split_dir, index, sex_info, manifest, gglob, name_mapping = ds_manifest.loc[wildcards.ds].tolist()
-    return [split_dir, index, sex_info, split_dir + "/" + wildcards.sample]
+    ds_dat = ds_manifest.loc[wildcards.ds]
+    return [ds_dat.split_index, ds_dat.genome_index, ds_dat.sex_info, ds_dat.split_index + "/" + wildcards.sample]
 
 def get_samples_from_ds(wildcards):
     data_path = ds_manifest.loc[wildcards.ds]["genome_index"]

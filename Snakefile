@@ -14,7 +14,8 @@ REFERENCE = config["reference"]
 DATASETS = config["datasets"]
 DATATYPES = config["data_types"]
 
-ds_manifest = pd.read_table(config["ref_files"][REFERENCE]["datasets"], header=0)
+ds_manifest = pd.read_table(config["datasets_file"], header=0)
+ds_manifest = ds_manifest.ix[ds_manifest.reference == REFERENCE, :]
 ds_manifest.index = ds_manifest.dataset
 
 DIRS_TO_MAKE = ["log", TABLE_DIR, PLOT_DIR]

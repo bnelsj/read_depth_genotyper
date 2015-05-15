@@ -1,2 +1,0 @@
-dataset	split_index	genome_index	sex_info	manifest	name_mapping
-hgdp	/net/eichler/vol2/eee_shared/whole_genome_resources/hg38/hgdp/split_index	/net/eichler/vol2/eee_shared/whole_genome_resources/hg38/hgdp/index.genome	/net/eichler/vol2/eee_shared/whole_genome_resources/hg38/hgdp/sex_info	/net/eichler/vol2/eee_shared/whole_genome_resources/hgdp/hgdp.manifest.filtered.tab	none
