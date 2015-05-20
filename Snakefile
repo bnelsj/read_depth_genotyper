@@ -57,21 +57,7 @@ def get_family_from_name(name, coord_files):
             for line in reader:
                 test_name = line.rstrip().split()[3]
                 if test_name == name:
-                    return coord_file.split("/")[1].split(".")[0]
-
-def get_n_samples(region_file):
-    with open(region_file, 'r') as reader:
-        line = next(reader)
-        nsamples = len(line.rstrip().split()) - 4
-    return nsamples
-
-def get_n_plots(region_file, spp):
-    nsamples = get_n_samples(region_file)
-    nplots = 0
-    while nsamples > 0:
-        nsamples -= spp
-        nplots += 1
-    return map(str, range(nplots))
+                    return os.path.basename(coord_file).split(".")[0]
 
 rule all:   
     input:  "%s/num_suns.table.tab" % (TABLE_DIR),

@@ -21,16 +21,13 @@ def get_samples_from_ds(wildcards):
     data.columns = ["sample", "mapping", "bac_analysis", "sequences", "primary_analysis"]
     return ["%s/%s/%s_%s" % (wildcards.ds, wildcards.fam, wildcards.dt, sn) for sn in data.sample.unique().tolist()]
 
-def get_regions_from_fam(wildcards):
-    return [config["bedfiles"].get(wildcards.fam), "{fam}/{fam}.{ds}.{dt}.genotypes.tab"]
-
 rule genotype:
     input: expand("{fam}/{fam}.{ds}.{dt}.genotypes.tab", fam = REGION_SETS, ds = DATASETS, dt = ["wssd", "sunk"])
     params: sge_opts="-N all_gts"
 
 rule convert_genotypes:
     input: "{fam}/{fam}_{ds}_{dt}.tab"
-    output: "{fam}/{fam}.{ds}.{dt}.genotypes.tab"
+    output: "{fam,\w+}/{fam}.{ds,\w+}.{dt}.genotypes.tab"
     params: sge_opts = "-N convert_gts"
     run:
         pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep=r"\s*", index_col=False)
@@ -38,8 +35,8 @@ rule convert_genotypes:
         regions.columns = ["chr", "start", "end", "name", "score", "strand", "thickStart", "thickEnd", "itemRgb" "blockCount", "blockSizes", "blockStarts"][0:len(regions.columns)]
         cns = pd.read_csv(input[0], header = 0, sep = r"\s*", index_col=False)
         new_cns_cols = cns.columns.tolist()
-        name_mapping_file = ds_manifest.loc[wildcards.ds]["name_mapping"]
-        if name_mapping_file not in ["None", "NA", "none"]:
+        name_mapping_file = str(ds_manifest.loc[wildcards.ds]["name_mapping"])
+        if name_mapping_file not in ["None", "NA", "none", "nan"]:
             name_mapping = pd.read_csv(name_mapping_file, sep=r"\s*", header=None, index_col=0)
             for i, col in enumerate(new_cns_cols):
                 if col in name_mapping.index:
