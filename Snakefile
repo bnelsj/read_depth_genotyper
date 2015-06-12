@@ -172,6 +172,10 @@ rule plot_violins:
         shell("""Rscript scripts/genotype_violin.R {TABLE_DIR}/{family}_{wildcards.dataset}_{wildcards.datatype}.genotypes.df {output[1]} {wildcards.name} {wildcards.file_type} {title} 3; touch {output[1]}""")
         shell("""Rscript scripts/genotype_violin.R {TABLE_DIR}/{family}_{wildcards.dataset}_{wildcards.datatype}.genotypes.df {output[2]} {wildcards.name} {wildcards.file_type} {title} 3 super_pop_only; touch {output[2]}""")
 
+rule get_tables:
+    input: expand("%s/{fam}_{dataset}_{datatype}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
+    params: sge_opts = ""
+
 rule get_long_table:
     input: regions = "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
     output: "%s/{fam}_{dataset}_{datatype}.genotypes.df" % (TABLE_DIR)
@@ -189,7 +193,8 @@ rule combine_genotypes:
         fam = wildcards.fam
         dt = wildcards.datatype
         ds = wildcards.dataset
-        main_ds = pd.read_table(input[0], na_values="NA")
+        fn_main = [x for x in input if ds in x][0]
+        main_ds = pd.read_table(fn_main, na_values="NA")
         for app_ds in config["append_dataset"]:
             if app_ds != ds:
                 append_dataset = pd.read_csv("{fam}/{fam}.{app_ds}.{dt}.genotypes.tab".format(fam=fam, app_ds=app_ds, dt=dt), header=0, sep="\t", index_col=False)
