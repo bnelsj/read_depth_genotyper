@@ -5,7 +5,6 @@ import pandas as pd
 TOTAL_SUBSETS = 1
 CHR_OUTPUT_DIR = "genotypes/chr"
 FINAL_OUTPUT_DIR = "genotypes_all"
-GGLOB_DIR = "/net/eichler/vol19/projects/human_population_sequencing/nobackups/psudmant/wnd_output_DTS/hg19/C_team/gglob_renamed_no_arch"
 REGIONS = config.get("regions")
 COORDS = list(config.get("bedfiles").values())
 
