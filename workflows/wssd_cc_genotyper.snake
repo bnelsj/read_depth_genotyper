@@ -22,8 +22,15 @@ def get_samples_from_ds(wildcards):
     return ["%s/%s/%s_%s" % (wildcards.ds, wildcards.fam, wildcards.dt, sn) for sn in data.sample.unique().tolist()]
 
 rule genotype:
-    input: expand("{fam}/{fam}.{ds}.{dt}.genotypes.tab", fam = REGION_SETS, ds = DATASETS, dt = ["wssd", "sunk"])
+    input: expand("{fam}/{fam}.{ds}.{dt}.{gt_type}.tab", fam = REGION_SETS, ds = DATASETS, dt = ["wssd", "sunk"], gt_type = ["genotypes", "GMM.genotypes"])
     params: sge_opts="-N all_gts"
+
+rule get_GMM_genotypes:
+    input: "{fam}/{fam}.{ds}.{dt}.genotypes.tab"
+    output: "{fam}/{fam}.{ds}.{dt}.GMM.genotypes.tab"
+    params: sge_opts = "-N GMM", max_cp = "12"
+    shell:
+        "python scripts/get_GMM_genotypes.py {input} {output} --max_cp {params.max_cp}"
 
 rule convert_genotypes:
     input: "{fam}/{fam}_{ds}_{dt}.tab"
