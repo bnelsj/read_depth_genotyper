@@ -26,7 +26,7 @@ rule genotype:
     params: sge_opts="-N all_gts"
 
 rule get_GMM_genotypes:
-    input: "{fam}/{ds}/{fam}.{ds}.{dt}.genotypes.tab"
+    input: "{fam}/{fam}.{ds}.{dt}.genotypes.tab"
     output: "{fam}/{fam}.{ds}.{dt}.GMM.genotypes.tab"
     params: sge_opts = "-N GMM", max_cp = "12"
     shell:
@@ -34,7 +34,7 @@ rule get_GMM_genotypes:
 
 rule convert_genotypes:
     input: "{fam}/{ds}/{fam}_{ds}_{dt}.tab"
-    output: "{fam,\w+}/{fam}.{ds,\w+}.{dt}.genotypes.tab"
+    output: "{fam,\w+}/{fam}.{ds,\w+}.{dt,\w+}.genotypes.tab"
     params: sge_opts = "-N convert_gts"
     run:
         pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep=r"\s*", index_col=False)
