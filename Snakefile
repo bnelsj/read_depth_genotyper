@@ -34,12 +34,12 @@ for folder in DIRS_TO_MAKE:
 GENE_GRAM_SETTINGS = config.get("gene_gram_settings", "")
 SPP = config.get("spp", 500)
 
-def get_region_names(coord_files):
+def get_region_names(region_names):
     names = []
-    for coord_file in coord_files:
-        with open(coord_file, 'r') as reader:
+    for region in region_names:
+        with open(config.get("bedfiles")[region], 'r') as reader:
             for line in reader:
-                names.append(line.rstrip().split()[3])
+                names.append("%s.%s" % (region, line.rstrip().split()[3]))
     return names
 
 def get_coords_and_size_from_name(name, coord_files):
@@ -61,11 +61,11 @@ def get_family_from_name(name, coord_files):
 
 rule all:   
     input:  "%s/num_suns.table.tab" % (TABLE_DIR),
-            expand("%s/{fam}/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR),
+            expand("%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR),
             fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES, file_type = config["plot_file_type"]),
-            expand("%s/{fam}/violin/{name}_{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR),
-            fam = REGION_NAMES, dataset = config["main_dataset"], name = get_region_names(COORDS), datatype = DATATYPES, file_type = config["plot_file_type"]),
-            expand("%s/{fam}/{plottype}_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, plottype=["violin", "scatter", "superpop"], datatype = DATATYPES)
+            expand("%s/violin/{fam_name}.{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR),
+            fam_name = get_region_names(REGION_NAMES), dataset = config["main_dataset"], datatype = DATATYPES, file_type = config["plot_file_type"]),
+            expand("%s/{fam}.{plottype}_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, plottype=["violin", "scatter", "superpop"], datatype = DATATYPES)
     params: sge_opts=""
 
 rule get_cn_wssd_variance:
@@ -142,44 +142,45 @@ rule get_suns:
 
 rule plot_gene_grams:
     input: expand("{fam}/{fam}.{dataset}.combined.{datatype}.bed", fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
-    output: "%s/{fam}/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR)
+    output: "%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR)
     params: sge_opts = "-l mfree=8G -N gene_grams"
     run:
         manifest = ds_manifest.loc[wildcards.dataset]["manifest"]
-        shell("""python scripts/gene_gram.py {wildcards.fam}/{wildcards.fam}.{wildcards.dataset}.combined.{wildcards.datatype}.bed {manifest} {PLOT_DIR}/{wildcards.fam}/gene_grams/{wildcards.fam}_{wildcards.dataset}_{wildcards.datatype} --plot_type {wildcards.file_type} --spp {SPP} {GENE_GRAM_SETTINGS}""")
+        shell("""python scripts/gene_gram.py {wildcards.fam}/{wildcards.fam}.{wildcards.dataset}.combined.{wildcards.datatype}.bed {manifest} {PLOT_DIR}/gene_grams/{wildcards.fam}_{wildcards.dataset}_{wildcards.datatype} --plot_type {wildcards.file_type} --spp {SPP} {GENE_GRAM_SETTINGS}""")
 
 rule get_combined_pdfs:
     input: expand("%s/{fam}/violin_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, datatype = DATATYPES)
     params: ""
 
 rule combine_violin_pdfs:
-    input: expand("%s/{fam}/{plottype}/{name}_{dataset}_{plottype}_{datatype}.pdf" % (PLOT_DIR), fam = REGION_NAMES, plottype = ["violin", "scatter", "superpop"], name = get_region_names(COORDS), dataset = config["main_dataset"], datatype = DATATYPES)
-    output: "%s/{fam}/violin_{datatype}.pdf" % PLOT_DIR, "%s/{fam}/scatter_{datatype}.pdf" % PLOT_DIR, "%s/{fam}/superpop_{datatype}.pdf" % PLOT_DIR
+    input: expand("%s/{plottype}/{fam_name}.{dataset}_{plottype}_{datatype}.pdf" % (PLOT_DIR), plottype = ["violin", "scatter", "superpop"], fam_name = get_region_names(REGION_NAMES), dataset = config["main_dataset"], datatype = DATATYPES)
+    output: "%s/{fam}.violin_{datatype}.pdf" % PLOT_DIR, "%s/{fam}.scatter_{datatype}.pdf" % PLOT_DIR, "%s/{fam}.superpop_{datatype}.pdf" % PLOT_DIR
     params: sge_opts = "-l mfree=8G -N pdf_combine"
     run:
         for pt in ["violin", "scatter", "superpop"]:
             outfile = [file for file in output if pt in file][0]
-            shell("""gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile={outfile} plots/{wildcards.fam}/{pt}/*{pt}_{wildcards.datatype}.pdf""")
+            shell("""gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile={outfile} plots/{pt}/{wildcards.fam}*{pt}_{wildcards.datatype}.pdf""")
 
 rule plot_violins:
-    input: expand("%s/{fam}_{{dataset}}_{{datatype}}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES)
-    output: "%s/{fam}/violin/{name}_{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR), "%s/{fam}/scatter/{name}_{dataset}_scatter_{datatype}.{file_type}" % (PLOT_DIR), "%s/{fam}/superpop/{name}_{dataset}_superpop_{datatype}.{file_type}" % (PLOT_DIR)
+    input: expand("%s/{fam}.{{dataset}}.{{datatype}}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES)
+    output: "%s/violin/{fam_name}.{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR), "%s/scatter/{fam_name}.{dataset}_scatter_{datatype}.{file_type}" % (PLOT_DIR), "%s/superpop/{fam_name}.{dataset}_superpop_{datatype}.{file_type}" % (PLOT_DIR)
     params: sge_opts = "-l mfree=8G -N plot_violins"
     run:
-        family = get_family_from_name(wildcards.name, COORDS)
-        (coords, size) = get_coords_and_size_from_name(wildcards.name, COORDS)
-        title = "_".join([wildcards.name, coords, size, config["reference"], wildcards.dataset, wildcards.datatype])
-        shell("""Rscript scripts/genotype_violin.R {input[0]} {output[0]} {wildcards.name} {wildcards.file_type} {title} 3 violin; touch {output[0]}""")
-        shell("""Rscript scripts/genotype_violin.R {input[0]} {output[1]} {wildcards.name} {wildcards.file_type} {title} 3; touch {output[1]}""")
-        shell("""Rscript scripts/genotype_violin.R {input[0]} {output[2]} {wildcards.name} {wildcards.file_type} {title} 3 super_pop_only; touch {output[2]}""")
+        fam, name = wildcards.fam_name.split(".")
+        input_table = [file for file in input if fam in file][0]
+        (coords, size) = get_coords_and_size_from_name(name, COORDS)
+        title = "_".join([name, coords, size, config["reference"], wildcards.dataset, wildcards.datatype])
+        shell("""Rscript scripts/genotype_violin.R {input_table} {output[0]} {name} {wildcards.file_type} {title} 3 violin""")
+        shell("""Rscript scripts/genotype_violin.R {input_table} {output[1]} {name} {wildcards.file_type} {title} 3""")
+        shell("""Rscript scripts/genotype_violin.R {input_table} {output[2]} {name} {wildcards.file_type} {title} 3 super_pop_only""")
 
 rule get_tables:
-    input: expand("%s/{fam}_{dataset}_{datatype}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
+    input: expand("%s/{fam}.{dataset}.{datatype}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
     params: sge_opts = ""
 
 rule get_long_table:
     input: regions = "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
-    output: "%s/{fam}_{dataset}_{datatype}.genotypes.df" % (TABLE_DIR)
+    output: "%s/{fam}.{dataset}.{datatype}.genotypes.df" % (TABLE_DIR)
     params: sge_opts = "-l mfree=8G -N make_long_table"
     run:
         master_manifest = config["master_manifest"]
