@@ -19,7 +19,7 @@ def get_samples_from_ds(wildcards):
     data_path = ds_manifest.loc[wildcards.ds]["genome_index"]
     data = pd.read_table(data_path, header=None)
     data.columns = ["sample", "mapping", "bac_analysis", "sequences", "primary_analysis"]
-    return ["%s/%s/%s_%s" % (wildcards.fam, wildcards.ds, wildcards.dt, sn) for sn in data.sample.unique().tolist()]
+    return ["%s/%s/%s_%s" % (wildcards.fam, wildcards.ds, wildcards.dt, sn) for sn in data["sample"].unique().tolist()]
 
 rule genotype:
     input: expand("{fam}/{fam}.{ds}.{dt}.{gt_type}.tab", fam = REGION_SETS, ds = DATASETS, dt = ["wssd", "sunk"], gt_type = ["genotypes", "GMM.genotypes"])
