@@ -4,6 +4,8 @@ import pandas as pd
 
 configfile: "config.json"
 
+shell.prefix("source dat/modules.txt; ")
+
 COORDS = list(config.get("bedfiles").values())
 REGION_NAMES = list(config.get("bedfiles").keys())
 
