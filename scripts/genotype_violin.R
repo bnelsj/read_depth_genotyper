@@ -34,7 +34,7 @@ code.order = rev(unique(filt.copy_nums$code))
 sd.count <- sd(sorted.copy_nums$copy_num)
 min.count <- floor(min(sorted.copy_nums$copy_num))
 max.count <- ceiling(max(sorted.copy_nums$copy_num))
-breaks = ifelse(max.count < 20, 0:max.count, seq(0, max.count, by=5))
+breaks = ifelse(max.count < 20, 0:max.count + 0.5, seq(0, max.count, by=5))
 
 threshold <- mean(filt.copy_nums$copy_num) + 8*sd(filt.copy_nums$copy_num)
 
