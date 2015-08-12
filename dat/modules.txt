@@ -1,3 +1,7 @@
+module purge
+
+module load modules modules-init modules-gs modules-eichler
+
 module use /net/eichler/vol7/home/psudmant/local_modules
 export MOD_PS_SW=/net/eichler/vol7/home/psudmant/local_modules_sw
 

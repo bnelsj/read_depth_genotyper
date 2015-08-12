@@ -84,4 +84,4 @@ rule do_ml_analysis:
             mask_file = config["ref_files"][REFERENCE]["sunk_mask"]
             param_file = "_filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim1-ed-0.per_1kb_params"
             additional_args = "--sunk_based"
-        shell("source modules.txt; python scripts/ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {regions} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file {param_file} --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {params.out_dir} --omit_sample_name {additional_args}")
+        shell("source dat/modules.txt; python scripts/ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {regions} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file {param_file} --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {params.out_dir} --omit_sample_name {additional_args}")
