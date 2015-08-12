@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as sch
 from scipy.spatial.distance import pdist
@@ -202,14 +203,14 @@ if __name__ == "__main__":
     pop_info = pd.read_table(args.pop_file)
     pop_info.sort(columns=["super_pop", "pop"], inplace=True, axis=0)
 
-    sample_order = [sample for sample in pop_info.sample if sample in df.columns]
+    sample_order = [sample for sample in pop_info["sample"] if sample in df.columns]
 
     if args.spp is None or args.spp > len(sample_order):
         spp = len(sample_order)
     else:
         spp = args.spp
 
-    pop_info.index = pop_info.sample
+    pop_info.index = pop_info["sample"]
     pop_info = pop_info.ix[sample_order, :]
 
     df = df[["chr", "start", "end", "name"] + sample_order]
