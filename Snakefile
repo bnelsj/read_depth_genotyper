@@ -166,13 +166,13 @@ rule plot_violins:
     output: "%s/violin/{fam_name}.{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR), "%s/scatter/{fam_name}.{dataset}_scatter_{datatype}.{file_type}" % (PLOT_DIR), "%s/superpop/{fam_name}.{dataset}_superpop_{datatype}.{file_type}" % (PLOT_DIR)
     params: sge_opts = "-l mfree=8G -N plot_violins"
     run:
-        fam, name = wildcards.fam_name.split(".")
+        fam, name = wildcards.fam_name.split(".")[0], ".".join(wildcards.fam_name.split(".")[1:])
         input_table = [file for file in input if fam in file][0]
         (coords, size) = get_coords_and_size_from_name(name, COORDS)
         title = "_".join([name, coords, size, config["reference"], wildcards.dataset, wildcards.datatype])
-        shell("""Rscript scripts/genotype_violin.R {input_table} {output[0]} {name} {wildcards.file_type} {title} 3 violin""")
-        shell("""Rscript scripts/genotype_violin.R {input_table} {output[1]} {name} {wildcards.file_type} {title} 3""")
-        shell("""Rscript scripts/genotype_violin.R {input_table} {output[2]} {name} {wildcards.file_type} {title} 3 super_pop_only""")
+        shell("""Rscript scripts/genotype_violin.R {input_table} {output[0]} {name} {wildcards.file_type} {title} 3 violin; touch {output[0]}""")
+        shell("""Rscript scripts/genotype_violin.R {input_table} {output[1]} {name} {wildcards.file_type} {title} 3; touch {output[1]}""")
+        shell("""Rscript scripts/genotype_violin.R {input_table} {output[2]} {name} {wildcards.file_type} {title} 3 super_pop_only; touch {output[2]}""")
 
 rule get_tables:
     input: expand("%s/{fam}.{dataset}.{datatype}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
