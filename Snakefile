@@ -133,12 +133,12 @@ rule get_suns:
     output: "%s/num_suns.table.tab" % (TABLE_DIR)
     params: sge_opts = "-l mfree=2G -N get_SUNs", suns = "/net/eichler/vol5/home/bnelsj/projects/gene_grams/hg19_suns.no_repeats_36bp_flanking.bed"
     run:
-        for i, fam in enumerate(REGION_NAMES):
+        for i, coords in enumerate(COORDS):
             if i == 0:
-                shell("""module load bedtools/2.21.0; bedtools intersect -a {fam}/{fam}.coords.bed -b {params.suns} -wao | groupBy -g 1,2,3,4 -c 6,6 -o first,count | 
+                shell("""module load bedtools/2.21.0; bedtools intersect -a {coords} -b {params.suns} -wao | groupBy -g 1,2,3,4 -c 6,6 -o first,count | 
                          awk 'OFS="\t" {{print $1, $2, $3, $4, $3-$2, $5 != "-1" ? $6 : 0}}' > {output[0]}""")
             else:
-                shell("""module load bedtools/2.21.0; bedtools intersect -a {fam}/{fam}.coords.bed -b {params.suns} -wao | groupBy -g 1,2,3,4 -c 6,6 -o first,count | 
+                shell("""module load bedtools/2.21.0; bedtools intersect -a {coords} -b {params.suns} -wao | groupBy -g 1,2,3,4 -c 6,6 -o first,count | 
                          awk 'OFS="\t" {{print $1, $2, $3, $4, $3-$2, $5 != "-1" ? $6 : 0}}' >> {output[0]}""")
         shell("""sed -i '1ichr\tstart\tend\tname\tsize\tnSUNs' {output[0]}""")
 
