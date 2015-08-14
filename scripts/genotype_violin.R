@@ -34,12 +34,13 @@ code.order = rev(unique(filt.copy_nums$code))
 sd.count <- sd(sorted.copy_nums$copy_num)
 min.count <- floor(min(sorted.copy_nums$copy_num))
 max.count <- ceiling(max(sorted.copy_nums$copy_num))
-breaks = ifelse(max.count < 20, 0:max.count + 0.5, seq(0, max.count, by=5))
 
-threshold <- mean(filt.copy_nums$copy_num) + 8*sd(filt.copy_nums$copy_num)
+if(max.count < 20) {
+	breaks = seq(0, max.count)
+} else breaks = seq(0, max.count, by=5)
 
-xlab = "Super population"
-ylab = "Copy number"
+xlab <- "Super population"
+ylab <- "Copy number"
 
 plot.legend <- ggplot(sorted.copy_nums, aes(x=code, y=copy_num, fill=code, name="Super population")) + 
         geom_violin() + theme_bw() + xlab(xlab) + ylab(ylab) + 
