@@ -55,8 +55,8 @@ p2 <- ggplot(sorted.copy_nums, aes(x=pop, y=copy_num)) +
     scale_y_continuous(breaks=breaks, limits=c(-0.5, max.count+0.5), minor_breaks=c())
 
 if(include_violin) {
-	p1 <- ggplot(sorted.copy_nums, aes(x=super_pop, y=copy_num, fill=code)) + 
-    geom_violin() + geom_point(alpha=0.5, colour='black', solid=T, size=1, position = position_jitter(h = 0, w=0.1)) + 
+	p1 <- ggplot(sorted.copy_nums, aes(x=super_pop, y=copy_num, colour=code)) + 
+    geom_violin() + geom_point(alpha=0.5, solid=T, size=1.5, position = position_jitter(h = 0, w=0.1)) + 
     theme_bw() + coord_flip() + xlab(xlab) + ylab(ylab) + theme(legend.position="none") + 
     scale_y_continuous(breaks=breaks, limits=c(-0.5, max.count+0.5), minor_breaks=c())
 } else {
