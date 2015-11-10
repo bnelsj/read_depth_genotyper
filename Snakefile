@@ -67,7 +67,8 @@ rule all:
             fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES, file_type = config["plot_file_type"]),
             expand("%s/violin/{fam_name}.{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR),
             fam_name = get_region_names(REGION_NAMES), dataset = config["main_dataset"], datatype = DATATYPES, file_type = config["plot_file_type"]),
-            expand("%s/{fam}.{plottype}_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, plottype=["violin", "scatter", "superpop"], datatype = DATATYPES)
+            expand("%s/{fam}.{plottype}_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, plottype=["violin", "scatter", "superpop"], datatype = DATATYPES),
+            expand("{fam}/{fam}.{ds}.{dt}.GMM.genotypes.tab", fam = REGION_NAMES, ds = DATASETS, dt = DATATYPES)
     params: sge_opts=""
 
 rule get_cn_wssd_variance:
