@@ -1,7 +1,6 @@
 {
 	"reference": "hg19",
 	"genotyper": "wssd_cc",
-	"genotype_methods": ["GMM", "float"],
 	"data_types": ["wssd", "sunk"],
 	"bedfiles": {"regions": "dat/regions.bed"},
     "datasets": ["archaics"],
