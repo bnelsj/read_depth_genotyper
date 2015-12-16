@@ -170,7 +170,7 @@ rule plot_violins:
     params: sge_opts = "-l mfree=8G -N plot_violins"
     run:
         fam, name = wildcards.fam_name.split(".")[0], ".".join(wildcards.fam_name.split(".")[1:])
-        input_table = [file for file in input if fam in file][0]
+        input_table = [file for file in input if fam in file and wildcards.dataset in file][0]
         (coords, size) = get_coords_and_size_from_name(name, COORDS)
         title = "_".join([name, coords, size, config["reference"], wildcards.dataset, wildcards.datatype])
         shell("""Rscript scripts/genotype_violin.R {input_table} {output[0]} {name} {wildcards.file_type} {title} 3 violin super_pop_only; touch {output[0]}""")
