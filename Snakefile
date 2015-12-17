@@ -171,11 +171,14 @@ rule plot_violins:
     run:
         fam, name = wildcards.fam_name.split(".")[0], ".".join(wildcards.fam_name.split(".")[1:])
         input_table = [file for file in input if fam in file and wildcards.dataset in file][0]
+        dat = pd.read_table(input_table)
+        max_cp = max(dat.copy_num)
+        max_cp = 7
         (coords, size) = get_coords_and_size_from_name(name, COORDS)
         title = "_".join([name, coords, size, config["reference"], wildcards.dataset, wildcards.datatype])
-        shell("""Rscript scripts/genotype_violin.R {input_table} {output[0]} {name} {wildcards.file_type} {title} 3 violin super_pop_only; touch {output[0]}""")
-        shell("""Rscript scripts/genotype_violin.R {input_table} {output[1]} {name} {wildcards.file_type} {title} 3; touch {output[1]}""")
-        shell("""Rscript scripts/genotype_violin.R {input_table} {output[2]} {name} {wildcards.file_type} {title} 3 super_pop_only; touch {output[2]}""")
+        shell("""Rscript scripts/genotype_violin.R {input_table} {output[0]} {name} {wildcards.file_type} {title} 3 violin super_pop_only --max_cp {max_cp} ; touch {output[0]}""")
+        shell("""Rscript scripts/genotype_violin.R {input_table} {output[1]} {name} {wildcards.file_type} {title} 3 --max_cp {max_cp} ; touch {output[1]}""")
+        shell("""Rscript scripts/genotype_violin.R {input_table} {output[2]} {name} {wildcards.file_type} {title} 3 super_pop_only --max_cp {max_cp} ; touch {output[2]}""")
 
 rule get_tables:
     input: expand("%s/{fam}.{dataset}.{datatype}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
