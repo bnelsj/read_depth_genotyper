@@ -68,7 +68,7 @@ rule all:
             expand("%s/violin/{fam_name}.{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR),
             fam_name = get_region_names(REGION_NAMES), dataset = config["main_dataset"], datatype = DATATYPES, file_type = config["plot_file_type"]),
             expand("%s/{fam}.{plottype}_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, plottype=["violin", "scatter", "superpop"], datatype = DATATYPES),
-            expand("{fam}/{fam}.{ds}.{dt}.GMM.genotypes.tab", fam = REGION_NAMES, ds = DATASETS, dt = DATATYPES)
+            expand("{fam}/{fam}.{ds}.combined.{dt}.GMM.bed", fam = REGION_NAMES, ds = DATASETS, dt = DATATYPES)
     params: sge_opts=""
 
 rule get_cn_wssd_variance:
@@ -193,9 +193,16 @@ rule get_long_table:
         pop_codes = config["pop_codes"]
         shell("""Rscript scripts/transform_genotypes.R {input.regions} {master_manifest} {pop_codes} {wildcards.dataset} {output}""")
 
+rule get_GMM_genotypes:
+    input: "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
+    output: "{fam}/{fam}.{dataset}.combined.{datatype}.GMM.bed"
+    params: sge_opts = "-N GMM", max_cp = "12"
+    shell:
+        "python scripts/get_GMM_genotypes.py {input} {output} --max_cp {params.max_cp}"
+
 rule combine_genotypes:
     input: expand("{{fam}}/{{fam}}.{ds}.{{datatype}}.genotypes.tab", ds = DATASETS)
-    output: "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
+    output: "{fam}/{fam}.{dataset}.combined.{datatype,\w+}.bed"
     params: sge_opts="-l mfree=2G -N combine_gt"
     run:
         fam = wildcards.fam
