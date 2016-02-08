@@ -132,7 +132,7 @@ rule get_cn_sunk_variance:
 rule get_sunks:
     input: COORDS
     output: "%s/num_sunks.table.tab" % (TABLE_DIR)
-    params: sge_opts = "-l mfree=2G -N get_SUNKs", sunks = "CH17_sunks_merged.bed"
+    params: sge_opts = "-l mfree=2G -N get_SUNKs", sunks = config["ref_files"][REFERENCE]["sunk_bed"]
     run:
         for i, coords in enumerate(COORDS):
             if i == 0:
@@ -193,7 +193,7 @@ rule get_long_table:
         pop_codes = config["pop_codes"]
         shell("""Rscript scripts/transform_genotypes.R {input.regions} {master_manifest} {pop_codes} {wildcards.dataset} {output}""")
 
-rule get_GMM_genotypes:
+rule get_combined_GMM_genotypes:
     input: "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
     output: "{fam}/{fam}.{dataset}.combined.{datatype}.GMM.bed"
     params: sge_opts = "-N GMM", max_cp = "12"
