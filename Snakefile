@@ -2,7 +2,7 @@ import csv
 import os
 import pandas as pd
 
-configfile: "config.json"
+configfile: "config.yaml"
 
 shell.prefix("source dat/modules.txt; ")
 
