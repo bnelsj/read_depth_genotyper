@@ -50,13 +50,13 @@ rule genotype:
 rule get_float_gts:
     input: "{rs}/%s/all.{ds}.float.{dt}" % FINAL_OUTPUT_DIR
     output: "{rs}/{rs}.{ds}.{dt}.genotypes.tab"
-    params: "-N cp_gts"
+    params: "-N cp_gts -l h_rt=0:10:00"
     shell: "cp {input} {output}"
 
 rule combine_by_chr:
     input: expand("{{rs}}/%s/{{ds}}.{chr}.{{method}}.{{dt}}" % CHR_OUTPUT_DIR, chr=CONTIGS)
     output: "{rs}/%s/all.{ds}.{method}.{dt}" % FINAL_OUTPUT_DIR
-    params: sge_opts = '-l mfree=8G -N combine_all'
+    params: sge_opts = '-l mfree=8G -N combine_all -l h_rt=0:30:00'
     run:
         with open(output[0], 'w') as outfile:
             for infile in input:
@@ -68,7 +68,7 @@ rule combine_by_chr:
 rule genotype_by_chr:
     input: get_gglob_from_ds
     output: "{rs}/%s/{ds}.{chr}.{method}.{dt}" % CHR_OUTPUT_DIR
-    params: sge_opts = "-l mfree=16G -N gt_{ds}_{chr}_{method}_{dt}", max_cp=str(MAX_CP), header_chr = CONTIGS[0]
+    params: sge_opts = "-l mfree=16G -N gt_{ds}_{chr}_{method}_{dt} -l h_rt=4:00:00", max_cp=str(MAX_CP), header_chr = CONTIGS[0]
     run:
         regions = config["bedfiles"][wildcards.rs]
         manifest = ds_manifest[wildcards.ds]["manifest"]

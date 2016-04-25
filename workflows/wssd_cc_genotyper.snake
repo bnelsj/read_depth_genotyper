@@ -28,14 +28,14 @@ rule genotype:
 rule get_GMM_genotypes:
     input: "{fam}/{fam}.{ds}.{dt}.genotypes.tab"
     output: "{fam}/{fam}.{ds}.{dt}.GMM.genotypes.tab"
-    params: sge_opts = "-N GMM", max_cp = "12"
+    params: sge_opts = "-N GMM -l h_rt=1:00:00", max_cp = "12"
     shell:
         "python scripts/get_GMM_genotypes.py {input} {output} --max_cp {params.max_cp}"
 
 rule convert_genotypes:
     input: "{fam}/{ds}/{fam}_{ds}_{dt}.tab"
     output: "{fam,\w+}/{fam}.{ds,\w+}.{dt,\w+}.genotypes.tab"
-    params: sge_opts = "-N convert_gts"
+    params: sge_opts = "-N convert_gts -l h_rt=0:10:00"
     run:
         pop_file = pd.read_csv(ds_manifest.loc[wildcards.ds]["manifest"], header=0, sep=r"\s*", index_col=False)
         regions = pd.read_csv(config["bedfiles"][wildcards.fam], header = None, sep = r"\s*", index_col=False)
@@ -59,7 +59,7 @@ rule convert_genotypes:
 rule make_cn_table:
     input: get_samples_from_ds
     output: "{fam}/{ds}/{fam}_{ds}_{dt}.tab"
-    params: sge_opts="-N cn_table", out_dir = "{fam}/{ds}", out_file = "{fam}_{ds}_{dt}.tab"
+    params: sge_opts="-N cn_table -l h_rt=0:10:00", out_dir = "{fam}/{ds}", out_file = "{fam}_{ds}_{dt}.tab"
     log: "log/{ds}/{dt}_ml_summary.txt"
     run:
         sex_info = ds_manifest.loc[wildcards.ds]["sex_info"]
@@ -71,7 +71,7 @@ rule make_cn_table:
 rule do_ml_analysis:
     input: get_input_files_from_ds_name
     output: "{fam}/{ds}/{dt,wssd|sunk}_{sample}"
-    params: sge_opts="-N ml_analysis", sample = "{sample}", dt = "{dt}", out_dir = "{fam}/{ds}"
+    params: sge_opts="-N ml_analysis -l h_rt=0:10:00", sample = "{sample}", dt = "{dt}", out_dir = "{fam}/{ds}"
     log: "log/{ds}/{sample}_{dt}_ml_analysis.txt"
     run:
         contigs_file = config["ref_files"][REFERENCE]["contigs"]
