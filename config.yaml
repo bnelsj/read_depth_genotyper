@@ -35,3 +35,4 @@ ref_files:
         contigs: /net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_contigs.tab
         wssd_mask: /net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_noWM_pad36
         sunk_mask: /net/eichler/vol2/eee_shared/assemblies/hg38/read_depth/illumina/hg38_sunk_mask_track_pad36_e0.dts
+        sunk_bed: /net/eichler/vol2/eee_shared/assemblies/hg38/sunks/suns.no_repeats_36bp_flanking.bed
