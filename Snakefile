@@ -132,7 +132,7 @@ rule get_cn_sunk_variance:
 rule get_sunks:
     input: COORDS
     output: "%s/num_sunks.table.tab" % (TABLE_DIR)
-    params: sge_opts = "-l mfree=2G -N get_SUNKs", sunks = config["ref_files"][REFERENCE]["sunk_bed"]
+    params: sge_opts = "-l mfree=2G -N get_SUNKs -l h_rt=0:30:00", sunks = config["ref_files"][REFERENCE]["sunk_bed"]
     run:
         for i, coords in enumerate(COORDS):
             if i == 0:
@@ -146,7 +146,7 @@ rule get_sunks:
 rule plot_gene_grams:
     input: expand("{fam}/{fam}.{dataset}.combined.{datatype}.bed", fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
     output: "%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR)
-    params: sge_opts = "-l mfree=8G -N gene_grams"
+    params: sge_opts = "-l mfree=8G -N gene_grams -l h_rt=0:30:00"
     run:
         manifest = ds_manifest.loc[wildcards.dataset]["manifest"]
         shell("""python scripts/gene_gram.py {wildcards.fam}/{wildcards.fam}.{wildcards.dataset}.combined.{wildcards.datatype}.bed {manifest} {PLOT_DIR}/gene_grams/{wildcards.fam}_{wildcards.dataset}_{wildcards.datatype} --plot_type {wildcards.file_type} --spp {SPP} {GENE_GRAM_SETTINGS}""")
@@ -158,7 +158,7 @@ rule get_combined_pdfs:
 rule combine_violin_pdfs:
     input: expand("%s/{plottype}/{fam_name}.{dataset}_{plottype}_{datatype}.pdf" % (PLOT_DIR), plottype = ["violin", "scatter", "superpop"], fam_name = get_region_names(REGION_NAMES), dataset = config["main_dataset"], datatype = DATATYPES)
     output: "%s/{fam}.violin_{datatype}.pdf" % PLOT_DIR, "%s/{fam}.scatter_{datatype}.pdf" % PLOT_DIR, "%s/{fam}.superpop_{datatype}.pdf" % PLOT_DIR
-    params: sge_opts = "-l mfree=8G -N pdf_combine"
+    params: sge_opts = "-l mfree=8G -N pdf_combine -l h_rt=0:30:00"
     run:
         for pt in ["violin", "scatter", "superpop"]:
             outfile = [file for file in output if pt in file][0]
@@ -167,7 +167,7 @@ rule combine_violin_pdfs:
 rule plot_violins:
     input: expand("%s/{fam}.{{dataset}}.{{datatype}}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES)
     output: "%s/violin/{fam_name}.{dataset}_violin_{datatype}.{file_type}" % (PLOT_DIR), "%s/scatter/{fam_name}.{dataset}_scatter_{datatype}.{file_type}" % (PLOT_DIR), "%s/superpop/{fam_name}.{dataset}_superpop_{datatype}.{file_type}" % (PLOT_DIR)
-    params: sge_opts = "-l mfree=8G -N plot_violins"
+    params: sge_opts = "-l mfree=8G -N plot_violins -l h_rt=0:10:00"
     run:
         fam, name = wildcards.fam_name.split(".")[0], ".".join(wildcards.fam_name.split(".")[1:])
         input_table = [file for file in input if fam in file and wildcards.dataset in file][0]
@@ -187,7 +187,7 @@ rule get_tables:
 rule get_long_table:
     input: regions = "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
     output: "%s/{fam}.{dataset}.{datatype}.genotypes.df" % (TABLE_DIR)
-    params: sge_opts = "-l mfree=8G -N make_long_table"
+    params: sge_opts = "-l mfree=8G -N make_long_table -l h_rt=0:30:00"
     run:
         master_manifest = config["master_manifest"]
         pop_codes = config["pop_codes"]
@@ -196,22 +196,23 @@ rule get_long_table:
 rule get_combined_GMM_genotypes:
     input: "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
     output: "{fam}/{fam}.{dataset}.combined.{datatype}.GMM.bed"
-    params: sge_opts = "-N GMM", max_cp = "12"
+    params: sge_opts = "-N GMM -l h_rt=0:30:00", max_cp = "12"
     shell:
         "python scripts/get_GMM_genotypes.py {input} {output} --max_cp {params.max_cp}"
 
 rule combine_genotypes:
     input: expand("{{fam}}/{{fam}}.{ds}.{{datatype}}.genotypes.tab", ds = DATASETS)
     output: "{fam}/{fam}.{dataset}.combined.{datatype,\w+}.bed"
-    params: sge_opts="-l mfree=2G -N combine_gt"
+    params: sge_opts="-l mfree=2G -N combine_gt -l h_rt=0:30:00"
     run:
         fam = wildcards.fam
         dt = wildcards.datatype
         ds = wildcards.dataset
         fn_main = [x for x in input if ds in x][0]
         main_ds = pd.read_table(fn_main, na_values="NA")
-        for app_ds in config["append_dataset"]:
-            if app_ds != ds:
-                append_dataset = pd.read_csv("{fam}/{fam}.{app_ds}.{dt}.genotypes.tab".format(fam=fam, app_ds=app_ds, dt=dt), header=0, sep="\t", index_col=False)
-                main_ds = main_ds.merge(append_dataset, on=["chr", "start", "end", "name"])
+        if config["append_dataset"] is not None:
+            for app_ds in config["append_dataset"]:
+                if app_ds != ds:
+                    append_dataset = pd.read_csv("{fam}/{fam}.{app_ds}.{dt}.genotypes.tab".format(fam=fam, app_ds=app_ds, dt=dt), header=0, sep="\t", index_col=False)
+                    main_ds = main_ds.merge(append_dataset, on=["chr", "start", "end", "name"])
         main_ds.to_csv("{fam}/{fam}.{ds}.combined.{dt}.bed".format(fam=fam, ds=ds, dt=dt), index=False, sep="\t", na_rep="NA")
