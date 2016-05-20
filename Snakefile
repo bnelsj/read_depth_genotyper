@@ -61,6 +61,8 @@ def get_family_from_name(name, coord_files):
                 if test_name == name:
                     return os.path.basename(coord_file).split(".")[0]
 
+localrules: all, get_combined_pdfs, get_tables
+
 rule all:   
     input:  "%s/num_sunks.table.tab" % (TABLE_DIR),
             expand("%s/gene_grams/{fam}_{dataset}_{datatype}.0.{file_type}" % (PLOT_DIR),
@@ -69,13 +71,12 @@ rule all:
             fam_name = get_region_names(REGION_NAMES), dataset = config["main_dataset"], datatype = DATATYPES, file_type = config["plot_file_type"]),
             expand("%s/{fam}.{plottype}_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, plottype=["violin", "scatter", "superpop"], datatype = DATATYPES),
             expand("{fam}/{fam}.{ds}.combined.{dt}.GMM.bed", fam = REGION_NAMES, ds = DATASETS, dt = DATATYPES)
-    params: sge_opts=""
 
 rule get_cn_wssd_variance:
     input:  gts = expand("{fam}/{dataset}/{dataset}.wssd.genotypes.tab", fam = REGION_NAMES, dataset = DATASETS),
             sunks = "%s/num_sunks.table.tab" % (TABLE_DIR)
     output: "%s/wssd_stats_by_family.tab" % (TABLE_DIR)
-    params: sge_opts = "-l mfree=2G -N get_var", families = REGION_NAMES
+    params: sge_opts = "-l mfree=2G -N get_var -l h_rt=1:00:00", families = REGION_NAMES
     run:
         wssd_stats = pd.DataFrame(columns=["name"])
         datasets = DATASETS
@@ -104,7 +105,7 @@ rule get_cn_sunk_variance:
     input:  gts = expand("{fam}/{dataset}/{dataset}.sunk.genotypes.tab", fam = REGION_NAMES, dataset = DATASETS), 
             sunks = "%s/num_sunks.table.tab" % (TABLE_DIR)
     output: "%s/sunk_stats_by_region.tab" % TABLE_DIR
-    params: sge_opts = "-l mfree=2G -N get_var", families = REGION_NAMES
+    params: sge_opts = "-l mfree=2G -N get_var -l h_rt=1:00:00", families = REGION_NAMES
     run:
         sunk_stats = pd.DataFrame(columns = ["name"])
         names = []
@@ -153,7 +154,6 @@ rule plot_gene_grams:
 
 rule get_combined_pdfs:
     input: expand("%s/{fam}/violin_{datatype}.pdf" % PLOT_DIR, fam = REGION_NAMES, datatype = DATATYPES)
-    params: ""
 
 rule combine_violin_pdfs:
     input: expand("%s/{plottype}/{fam_name}.{dataset}_{plottype}_{datatype}.pdf" % (PLOT_DIR), plottype = ["violin", "scatter", "superpop"], fam_name = get_region_names(REGION_NAMES), dataset = config["main_dataset"], datatype = DATATYPES)
@@ -182,7 +182,6 @@ rule plot_violins:
 
 rule get_tables:
     input: expand("%s/{fam}.{dataset}.{datatype}.genotypes.df" % (TABLE_DIR), fam = REGION_NAMES, dataset = DATASETS, datatype = DATATYPES)
-    params: sge_opts = ""
 
 rule get_long_table:
     input: regions = "{fam}/{fam}.{dataset}.combined.{datatype}.bed"
