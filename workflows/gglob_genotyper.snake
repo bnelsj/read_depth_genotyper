@@ -10,7 +10,6 @@ COORDS = list(config.get("bedfiles").values())
 
 DATASET = "hgdp"
 REGION_SETS = list(config["bedfiles"].keys())
-GENOTYPE_METHODS = config["genotype_methods"]
 DATATYPES = config["data_types"]
 MAX_CP = 50
 
