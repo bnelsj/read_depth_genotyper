@@ -72,7 +72,7 @@ rule make_cn_table:
 rule do_ml_analysis:
     input: get_input_files_from_ds_name
     output: "{fam}/{ds}/{dt,wssd|sunk}_{sample}"
-    params: sge_opts="-N ml_analysis -l h_rt=0:10:00", sample = "{sample}", dt = "{dt}", out_dir = "{fam}/{ds}"
+    params: sge_opts="-N ml_analysis -l h_rt=0:10:00 -l mfree=2G", sample = "{sample}", dt = "{dt}", out_dir = "{fam}/{ds}"
     log: "log/{ds}/{sample}_{dt}_ml_analysis.txt"
     run:
         contigs_file = config["ref_files"][REFERENCE]["contigs"]
