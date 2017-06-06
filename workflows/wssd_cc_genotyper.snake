@@ -1,6 +1,11 @@
 import pandas as pd
 import os
-shell.prefix("source dat/modules.txt; ")
+
+SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
+SCRIPT_DIR = SNAKEMAKE_DIR + "/../wssd_sunk"
+
+shell.prefix("source env.cfg; export PYTHONPATH=$PYTHONPATH:%s; " % SCRIPT_DIR)
+
 COORDS = list(config.get("bedfiles").values())
 REGION_SETS = list(config["bedfiles"].keys())
 
@@ -31,7 +36,7 @@ rule get_GMM_genotypes:
     output: "{fam}/{fam}.{ds}.{dt}.GMM.genotypes.tab"
     params: sge_opts = "-N GMM -l h_rt=1:00:00", max_cp = "12"
     shell:
-        "python scripts/get_GMM_genotypes.py {input} {output} --max_cp {params.max_cp}"
+        "python wssd_sunk/get_GMM_genotypes.py {input} {output} --max_cp {params.max_cp}"
 
 rule convert_genotypes:
     input: "{fam}/{ds}/{fam}_{ds}_{dt}.tab"
@@ -67,7 +72,7 @@ rule make_cn_table:
         genome_index = ds_manifest.loc[wildcards.ds]["genome_index"]
         input_dir = os.path.dirname(input[0])
         regions = config["bedfiles"][wildcards.fam]
-        shell("python scripts/make_ml_output_summary.py --input_dir {input_dir} --input_file_name {wildcards.dt} --input_regions {regions} --sex_pop_index {sex_info} --input_genomes {genome_index} --outdir {params.out_dir} --out_file {params.out_file} --regress")
+        shell("python wssd_sunk/make_ml_output_summary.py --input_dir {input_dir} --input_file_name {wildcards.dt} --input_regions {regions} --sex_pop_index {sex_info} --input_genomes {genome_index} --outdir {params.out_dir} --out_file {params.out_file} --regress")
 
 rule do_ml_analysis:
     input: get_input_files_from_ds_name
@@ -85,4 +90,4 @@ rule do_ml_analysis:
             mask_file = config["ref_files"][REFERENCE]["sunk_mask"]
             param_file = "_filtered_libs_analysis.GC3v2-NOWM-pad36/fit_params-CALKAN-NOWM-pad36-simple-dim1-ed-0.per_1kb_params"
             additional_args = "--sunk_based"
-        shell("python scripts/ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {regions} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file {param_file} --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {params.out_dir} --omit_sample_name {additional_args}")
+        shell("python wssd_sunk/ml_analyze_regions_snakemake.py --in_genomes {input[3]} --in_regions {regions} --contigs {contigs_file} --mask_file {mask_file} --output_name {wildcards.dt}_{params.sample} --sex_pop_index {input[2]} --param_file {param_file} --combined_corrected_name wssd.combined_corrected.GC3.v2 --output_dir {params.out_dir} --omit_sample_name {additional_args}")

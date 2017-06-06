@@ -71,5 +71,5 @@ rule genotype_by_chr:
     run:
         regions = config["bedfiles"][wildcards.rs]
         manifest = ds_manifest[wildcards.ds]["manifest"]
-        shell("{INIT_MODULES}; python scripts/combine_genotypes.py --regions {regions} --contig {wildcards.chr} --output {output[0]} --gglob_dir {input[0]} --genotype_method {wildcards.method} --data_type {wildcards.dt} --max_cp {params.max_cp} --header_chr {params.header_chr} --manifest {manifest}")
+        shell("{INIT_MODULES}; python wssd_sunk/combine_genotypes.py --regions {regions} --contig {wildcards.chr} --output {output[0]} --gglob_dir {input[0]} --genotype_method {wildcards.method} --data_type {wildcards.dt} --max_cp {params.max_cp} --header_chr {params.header_chr} --manifest {manifest}")
         shell("touch output")
