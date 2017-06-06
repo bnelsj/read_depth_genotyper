@@ -60,7 +60,7 @@ rule convert_genotypes:
 rule make_cn_table:
     input: get_samples_from_ds
     output: "{fam}/{ds}/{fam}_{ds}_{dt}.tab"
-    params: sge_opts="-N cn_table -l h_rt=0:10:00", out_dir = "{fam}/{ds}", out_file = "{fam}_{ds}_{dt}.tab"
+    params: sge_opts="-N cn_table -l h_rt=0:10:00 -l mfree=1G", out_dir = "{fam}/{ds}", out_file = "{fam}_{ds}_{dt}.tab"
     log: "log/{ds}/{dt}_ml_summary.txt"
     run:
         sex_info = ds_manifest.loc[wildcards.ds]["sex_info"]
@@ -72,7 +72,7 @@ rule make_cn_table:
 rule do_ml_analysis:
     input: get_input_files_from_ds_name
     output: "{fam}/{ds}/{dt,wssd|sunk}_{sample}"
-    params: sge_opts="-N ml_analysis -l h_rt=0:10:00 -l mfree=2G", sample = "{sample}", dt = "{dt}", out_dir = "{fam}/{ds}"
+    params: sge_opts="-N ml_analysis -l h_rt=4:0:00 -l mfree=2G", sample = "{sample}", dt = "{dt}", out_dir = "{fam}/{ds}"
     log: "log/{ds}/{sample}_{dt}_ml_analysis.txt"
     run:
         contigs_file = config["ref_files"][REFERENCE]["contigs"]
